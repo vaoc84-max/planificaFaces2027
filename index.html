@@ -153,6 +153,7 @@ input.lev-md{width:96px;text-align:right;border:2px solid var(--brand);font:700 
 .card.login label{font-size:12px;color:var(--ink-2);margin-top:4px}.lg-brand{display:flex;gap:12px;align-items:center;margin-bottom:8px}.lg-t{font:700 22px var(--font-head);letter-spacing:.5px}
 .param #nu_nom,.param #nu_mail{width:100%;min-width:190px}.param #nu_pass{min-width:120px}
 .lg-err{color:var(--neg);font-size:12px;min-height:16px}.lg-btn{width:100%;justify-content:center;padding:11px}
+.modoprom{display:flex;gap:6px;flex-wrap:wrap}.lever.info .big{font:600 30px var(--font-head)}
 .escsug{display:grid;grid-template-columns:1fr 1fr;gap:8px}.escsug div{display:grid}.escsug b{font:600 22px var(--font-head);font-variant-numeric:tabular-nums}
 .esc .en{font:700 13px var(--font-head);text-transform:uppercase;letter-spacing:.5px}
 table.mini th,table.mini td{padding:2px 6px;font-size:11px}
@@ -956,7 +957,7 @@ function solEsc(e) {
   const C = cacheSol(), id = 'sol_' + e; if (C[id]) return C[id];
   const M = meta(), keys = keysPlan();
   const base = E.sum(keys.map(k => prep(k).F.s.saldo[12])), target = base * (1 + (+M.g || 0));
-  const fijo = k => +presDe(k).cpd > 0;
+  const fijo = k => false;
   const cpdF = f => k => fijo(k) ? +presDe(k).cpd : cpdDeF(k, f, e);
   const tot = f => E.sum(keys.map(k => planAg(k, cpdF(f)(k), e, 1).saldo[12]));
   let lo = -3, hi = 6, f;
@@ -969,8 +970,8 @@ function solEsc(e) {
   return (C[id] = Object.assign(T, {f, cpdK: cpd, target, lam, moraNat: T1.mora, logrado: T.saldo, limite: f <= -3 + 1e-9 || f >= 6 - 1e-9}));
 }
 const escActual = () => (ESC_DEF[meta().esc] ? meta().esc : 'base');
-const cpdAg = k => { const v = +presDe(k).cpd; if (v > 0) return v; const s = solEsc(escActual()); return s.cpdK[k] || 1; };
-const cpdSug = k => { const s = solEsc(escActual()); return s.cpdK[k] != null && !(+presDe(k).cpd > 0) ? s.cpdK[k] : cpdDeF(k, s.f, escActual()); };
+const cpdAg = k => { const s = solEsc(escActual()); return s.cpdK[k] || 1; };
+const cpdSug = k => cpdAg(k);
 function feriadosAg(k) { const pl = S.planes[k] || {}; return cfg().feriados27.concat(Array.isArray(pl.feriados) ? pl.feriados : []); }
 /* Asesores con categoría, vacaciones y días efectivos */
 function asesoresAg(k) {
@@ -1001,7 +1002,7 @@ function promCategorias() {
   frescura();
   if (PCAT) return PCAT;
   const M = meta(), paso = +M.paso > 0 ? +M.paso : 1;
-  const ag = {}, sug = {}, hist = {};
+  const ag = {}, sug = {}, hist = {}, sugAg = {}, ase = {};
   Object.keys(S.ag).forEach(k => {
     const q = prep(k); if (!q) return;
     const {ases, W} = asesoresAg(k); if (!ases.length) return;
@@ -1014,10 +1015,15 @@ function promCategorias() {
       sug[k][c] = Math.max(paso, Math.round(q.def.prom * (+M.kc[c] || 1) / norm / paso) * paso);
       ag[k][c] = +fij[c] > 0 ? +fij[c] : sug[k][c];
     });
+    const pr = presDe(k), modo = modoProm(k);
+    sugAg[k] = Math.max(paso, Math.round(q.def.prom / paso) * paso);
+    const vAg = +pr.promAg > 0 ? +pr.promAg : sugAg[k];
+    ase[k] = ases.map(x => modo === 'agencia' ? vAg : modo === 'asesor' && +((pr.promAse || {})[x.id]) > 0 ? +pr.promAse[x.id] : ag[k][x.categ]);
   });
-  return (PCAT = {ag, sug, hist, paso});
+  return (PCAT = {ag, sug, hist, paso, sugAg, ase});
 }
-function promAses(k) { const {ases, W} = asesoresAg(k), pc = promCategorias().ag[k] || {}; return {W, prom: ases.map(x => pc[x.categ] || 0), min: null}; }
+const modoProm = k => ({agencia: 1, asesor: 1}[presDe(k).modoProm] ? presDe(k).modoProm : 'categoria');
+function promAses(k) { const {W} = asesoresAg(k), pa = promCategorias().ase[k] || []; return {W, prom: pa.map(v => v || 0), min: null}; }
 function modelo(k) {
   frescura();
   if (MOD[k] !== undefined) return MOD[k];
@@ -1030,7 +1036,8 @@ function modelo(k) {
   const red = redCer(q, fx.mora, lam, e === 'opt' ? tendAg(k) : null);
   const p = Object.assign({}, q.def, {cpd, redC1: red, redC15: red, redC30: red});
   const pl = q.pl;
-  const ases = AA.ases.map(x => Object.assign({}, x, {kc: pc[x.categ] || 1, promCat: pc[x.categ] || 0}));
+  const pa = promCategorias().ase[k] || [];
+  const ases = AA.ases.map((x, i) => Object.assign({}, x, {kc: pa[i] || pc[x.categ] || 1, promCat: pa[i] || pc[x.categ] || 0}));
   const D = ases.length ? E.distribuir(P, ases, ases.map(x => x.diasEf), dias, pl.criterio || c.criterio) : {R: [], base: []};
   ases.forEach((x, i) => {
     x.R = D.R[i]; x.base = D.base[i]; x.alertas = E.validarAsesor(D.R[i], x.categ, dias.map((d, m) => d ? x.diasEf[m] / d : 0)); x.asc = E.ascenso(D.R[i], x.categ);
@@ -1062,9 +1069,9 @@ function avisosAg(k, M) {
   const n26 = E.sum(F.otn.slice(1)), asesDias = E.sum(M.D) || 1, cpd26 = n26 / (asesDias * (E.sum(F.otn.slice(1)) ? 1 : 1));
   const hcpd = M.ases.length ? n26 / (M.ases.length * 250) : 0;
   if (hcpd > 0 && cpd > hcpd * 1.6) out.push({n: 'medio', t: `Se piden ${fmtN(cpd, 2)} créditos por asesor por día; en 2026 la agencia hizo ${fmtN(hcpd, 2)}.`});
-  const PC = promCategorias(), hist = PC.hist[k] || 0, cats = [...new Set(M.ases.map(x => x.categ))];
-  cats.forEach(c => {
-    const v = (PC.ag[k] || {})[c] || 0;
+  const PC = promCategorias(), hist = PC.hist[k] || 0, pa = PC.ase[k] || [];
+  const grupos = {}; M.ases.forEach((x, i) => { const v = pa[i] || 0; grupos[x.categ + '|' + v] = {c: x.categ, v}; });
+  Object.values(grupos).forEach(({c, v}) => {
     if (hist > 0 && v > hist * 1.3) out.push({n: 'medio', t: `Monto promedio ${c} de USD ${fmtN(v)}: ${pct(v / hist - 1)} sobre el promedio histórico de la agencia (USD ${fmtN(hist)}).`});
     const t = E.NORMA.cat[c] || {};
     if (t.m && v * cpd * 21 < t.m) out.push({n: 'medio', t: `Con USD ${fmtN(v)} y ${fmtN(cpd, 2)} créditos por día, un asesor ${c} no llega al mínimo de colocación de su categoría (USD ${fmtN(t.m)} al mes, Tabla 1.1).`});
@@ -1184,14 +1191,17 @@ function facesAg(k) {
   return {s24: y ? y.saldo[0] : 0, s25: y ? y.saldo[12] : F.saldo[0], sA: F.saldo[iA], s26: F.saldo[12],
     r24: y ? y.c30[0] : 0, r25: y ? y.c30[12] : F.c30[0], rA: F.c30[iA], r26: F.c30[12], iA};
 }
-function mercadoAlcance(MK, keys) {
+const TIPO_SEG = {SB: ['BANCA PRIVADA', 'BANCA PUBLICA'], SEPS: ['S1', 'S2', 'S3', 'MUT']};
+const segsTipo = (MK, t) => TIPO_SEG[t] ? MK.segs.filter(sg => TIPO_SEG[t].includes(sg)) : MK.segs;
+function mercadoAlcance(MK, keys, segs) {
+  segs = segs || MK.segs;
   const cants = [...new Set(keys.map(k => AG_CANT[k]).filter(c => MK.cant[c]))];
   const nf = MK.fechas.length, iD = f => MK.fechas.indexOf(f);
   const tot = MK.fechas.map(() => ({c: 0, r: 0})), seg = {};
-  MK.segs.forEach(sg => seg[sg] = MK.fechas.map(() => ({c: 0, r: 0})));
-  cants.forEach(c => MK.segs.forEach(sg => (MK.cant[c][sg] || []).forEach((v, i) => { tot[i].c += v[0]; tot[i].r += v[1]; seg[sg][i].c += v[0]; seg[sg][i].r += v[1]; })));
+  segs.forEach(sg => seg[sg] = MK.fechas.map(() => ({c: 0, r: 0})));
+  cants.forEach(c => segs.forEach(sg => (MK.cant[c][sg] || []).forEach((v, i) => { tot[i].c += v[0]; tot[i].r += v[1]; seg[sg][i].c += v[0]; seg[sg][i].r += v[1]; })));
   const ents = {};
-  MK.er.forEach(r => { if (!cants.includes(r[0])) return; const x = ents[r[1]] || (ents[r[1]] = {i: r[1], n: MK.ents[r[1]][0], sg: MK.ents[r[1]][1], c24: 0, c25: 0, c26: 0, r25: 0, r26: 0});
+  MK.er.forEach(r => { if (!cants.includes(r[0]) || !segs.includes(MK.ents[r[1]][1])) return; const x = ents[r[1]] || (ents[r[1]] = {i: r[1], n: MK.ents[r[1]][0], sg: MK.ents[r[1]][1], c24: 0, c25: 0, c26: 0, r25: 0, r26: 0});
     x.c24 += r[2]; x.c25 += r[3]; x.c26 += r[4]; x.r25 += r[5]; x.r26 += r[6]; });
   const fa = {s24: 0, s25: 0, sA: 0, s26: 0, r24: 0, r25: 0, rA: 0, r26: 0};
   keys.forEach(k => { const f = facesAg(k); if (f) Object.keys(fa).forEach(x => fa[x] += f[x]); });
@@ -1241,18 +1251,20 @@ function vistaMercado() {
   const regs = [...new Set(todas.map(k => S.ag[k].reg))].sort();
   const zonas = [...new Set(todas.filter(k => !F0.reg || S.ag[k].reg === F0.reg).map(k => S.ag[k].zona))].sort();
   const keys = todas.filter(k => (!F0.reg || S.ag[k].reg === F0.reg) && (!F0.zona || S.ag[k].zona === F0.zona));
-  const A = mercadoAlcance(MK, keys), fa = A.fa;
+  const SEGS = segsTipo(MK, F0.tipo), TIPL = {SB: 'SB · banca privada y pública', SEPS: 'SEPS · cooperativas S1–S3 y mutualistas'}[F0.tipo] || '';
+  const A = mercadoAlcance(MK, keys, SEGS), fa = A.fa;
   const i24 = A.iD('2024-12'), i25 = A.iD('2025-12'), iA = A.nf - 1;
   const mk = i => A.tot[i].c, mr = i => A.tot[i].c ? A.tot[i].r / A.tot[i].c : 0;
   const g25 = mk(i24) ? mk(i25) / mk(i24) - 1 : null, gA = mk(i25) ? mk(iA) / mk(i25) - 1 : null;
   const fg25 = fa.s24 ? fa.s25 / fa.s24 - 1 : null, fgA = fa.s25 ? fa.sA / fa.s25 - 1 : null;
   const part = fa.sA / (mk(iA) + fa.sA), part25 = fa.s25 / (mk(i25) + fa.s25);
   const nEnt = A.ents.filter(x => x.c26 > 0).length, puesto = 1 + A.ents.filter(x => x.c26 > fa.sA).length;
-  const alc = F0.zona ? F0.zona : F0.reg ? 'Región ' + F0.reg : 'Todas las agencias FACES';
+  const alc = (F0.zona ? F0.zona : F0.reg ? 'Región ' + F0.reg : 'Todas las agencias FACES') + (TIPL ? ' · ' + TIPL : '');
   const corteL = 'ago-2026';
   const filtro = `<div class="toolbar">
       <label for="mf_reg" class="muted">Región</label><select id="mf_reg" data-mfil="reg"><option value="">Todas</option>${regs.map(r => `<option ${r === F0.reg ? 'selected' : ''}>${esc(r)}</option>`).join('')}</select>
       <label for="mf_zona" class="muted">Zona</label><select id="mf_zona" data-mfil="zona"><option value="">Todas</option>${zonas.map(z => `<option ${z === F0.zona ? 'selected' : ''}>${esc(z)}</option>`).join('')}</select>
+      <label for="mf_tipo" class="muted">Tipo de entidad</label><select id="mf_tipo" data-mfil="tipo"><option value="">Todas</option><option value="SB" ${F0.tipo === 'SB' ? 'selected' : ''}>SB · Banca privada y pública</option><option value="SEPS" ${F0.tipo === 'SEPS' ? 'selected' : ''}>SEPS · Segmentos 1, 2, 3 y mutualistas</option></select>
       <span class="muted small">${keys.length} agencias · ${A.cants.length} cantones</span></div>`;
   const kpis = `<div class="kpis">
     <div class="kpi k1"><div class="l">Mercado de microcrédito · ${corteL}</div><div class="v">${fmtN(mk(iA) / 1e6, 1)}</div><div class="c">USD millones · ${nEnt} entidades en ${A.cants.length} cantones</div></div>
@@ -1276,7 +1288,7 @@ function vistaMercado() {
   const cMora = tarjeta('mora', 'Morosidad', 'Mercado: vencida + que no devenga · FACES: CER > 30', svgLineas([{n: 'Mercado', v: moraM, cls: 'lm'}, {n: 'FACES', v: moraF, cls: 'lf'}], labs, {titulo: 'Morosidad', paso: 0.02}) + `<div class="legend"><span><i class="cm"></i>Mercado</span><span><i class="cf"></i>FACES</span></div>`, tEvol, '', 'chart fit');
   // tipo de entidad
   const filaT = (n, c24, c25, cA, rA, ne, cls) => `<tr class="${cls || ''}"><td>${n}</td><td>${fmtN(cA / 1e6, 2)}</td><td>${fmtP(cA / totA)}</td><td>${sgn(c24 ? c25 / c24 - 1 : null)}</td><td>${sgn(c25 ? cA / c25 - 1 : null)}</td><td class="${cA && rA / cA > 0.1 ? 'neg' : ''}">${cA ? fmtP(rA / cA) : ''}</td><td>${ne}</td></tr>`;
-  const segOrd = MK.segs.map(sg => ({sg, c: A.seg[sg][iA].c})).filter(x => x.c > 0).sort((a, b) => b.c - a.c);
+  const segOrd = SEGS.map(sg => ({sg, c: A.seg[sg][iA].c})).filter(x => x.c > 0).sort((a, b) => b.c - a.c);
   const tTipo = `<div class="scroll"><table><thead><tr><th>Tipo de entidad</th><th>Cartera</th><th>Participación</th><th>Crec. 2025</th><th>Crec. 2026 (ene–ago)</th><th>Mora</th><th>Entidades</th></tr></thead><tbody>
     ${segOrd.map(({sg}) => filaT(SEG_N[sg], A.seg[sg][i24].c, A.seg[sg][i25].c, A.seg[sg][iA].c, A.seg[sg][iA].r, A.ents.filter(x => x.sg === sg && x.c26 > 0).length)).join('')}${filaT('FACES', fa.s24, fa.s25, fa.sA, fa.rA, 1, 'sub')}
     <tr class="tot"><td>Total</td><td>${fmtN(totA / 1e6, 2)}</td><td>100,00 %</td><td>${sgn(mk(i24) + fa.s24 ? (mk(i25) + fa.s25) / (mk(i24) + fa.s24) - 1 : null)}</td><td>${sgn((mk(iA) + fa.sA) / (mk(i25) + fa.s25) - 1)}</td><td>${fmtP((A.tot[iA].r + fa.rA) / totA)}</td><td>${nEnt + 1}</td></tr></tbody></table></div>`;
@@ -1306,8 +1318,8 @@ function vistaMercado() {
     const ks = keys.filter(k => AG_CANT[k] === c), f = {sA: 0, rA: 0};
     ks.forEach(k => { const x = facesAg(k); f.sA += x.sA; f.rA += x.rA; });
     let c24 = 0, c25 = 0, cA = 0, rA = 0;
-    MK.segs.forEach(sg => { const v = MK.cant[c][sg]; if (!v) return; c24 += v[i24][0]; c25 += v[i25][0]; cA += v[iA][0]; rA += v[iA][1]; });
-    const lid = MK.er.filter(r => r[0] === c).sort((a, b) => b[4] - a[4])[0];
+    SEGS.forEach(sg => { const v = MK.cant[c][sg]; if (!v) return; c24 += v[i24][0]; c25 += v[i25][0]; cA += v[iA][0]; rA += v[iA][1]; });
+    const lid = MK.er.filter(r => r[0] === c && SEGS.includes(MK.ents[r[1]][1])).sort((a, b) => b[4] - a[4])[0];
     return {c, ks, c24, c25, cA, rA, f, p: f.sA / (cA + f.sA), lid: lid ? MK.ents[lid[1]][0] + ' (' + fmtN(lid[4] / (cA + f.sA) * 100, 1) + ' %)' : ''};
   });
   const tCant = `<div class="scroll"><table><thead><tr><th>Cantón</th><th class="l">Agencias FACES</th><th>Mercado</th><th>Crec. 2025</th><th>Crec. 2026 (ene–ago)</th><th>Mora mercado</th><th>Saldo FACES</th><th>Participación FACES</th><th>CER > 30 FACES</th><th class="l">Líder del cantón</th></tr></thead><tbody>${rowsC.slice().sort((a, b) => b.f.sA - a.f.sA).map(r => `<tr><td>${esc(r.c)}</td><td class="l small">${esc(r.ks.map(k => S.ag[k].nombre).join(', '))}</td><td>${fmtN(r.cA / 1e6, 1)}</td><td>${sgn(r.c24 ? r.c25 / r.c24 - 1 : null)}</td><td>${sgn(r.c25 ? r.cA / r.c25 - 1 : null)}</td><td class="${r.rA / r.cA > 0.1 ? 'neg' : ''}">${fmtP(r.rA / r.cA)}</td><td>${fmtN(r.f.sA / 1e6, 2)}</td><td>${fmtP(r.p)}</td><td class="${r.f.sA && r.f.rA / r.f.sA > E.NORMA.cer30 ? 'neg' : ''}">${r.f.sA ? fmtP(r.f.rA / r.f.sA) : ''}</td><td class="l small">${esc(r.lid)}</td></tr>`).join('')}</tbody></table></div>`;
@@ -1415,12 +1427,25 @@ function panelAgencia(k) {
   const cats = Object.keys(DEF_META.kc).filter(c => M.ases.some(x => x.categ === c));
   const hist = PC.hist[k] || 0, n26 = E.sum(F.otn.slice(1)), o26 = E.sum(F.otm.slice(1));
   const y25p = y25 && E.sum(y25.otn.slice(1)) ? E.sum(y25.otm.slice(1)) / E.sum(y25.otn.slice(1)) : null;
+  const modo = modoProm(k), pa = PC.ase[k] || [];
   const filasCat = cats.map((c, i) => {
     const xs = M.ases.filter(x => x.categ === c), fij = +(pres.prom || {})[c] > 0, v = PC.ag[k][c];
     return `<tr><td>${c}</td><td>${xs.length}</td><td>${fmtN(PC.sug[k][c])}</td>
       <td class="lever-col"><input id="pp_${i}" class="lev-md${fij ? ' ov' : ''}" type="text" inputmode="numeric" data-pres="prom" data-pcat="${c}" value="${v}" ${ed ? '' : 'disabled'}>${fij && ed ? ` <button class="btn lnk" data-presreset="${c}">sugerido</button>` : ''}</td>
       <td>${sgn(hist ? v / hist - 1 : null)}</td><td>${fmtN(E.NORMA.cat[c].m || 0) || '—'}</td></tr>`;
   }).join('');
+  const fijAg = +pres.promAg > 0, vAg = fijAg ? +pres.promAg : PC.sugAg[k];
+  const tablaAg = `<div class="scroll"><table><thead><tr><th>Agencia</th><th>Asesores</th><th>Sugerido (USD)</th><th class="lever-col">Fijado por Presidencia (USD)</th><th>vs promedio histórico</th></tr></thead><tbody>
+    <tr><td>${esc(a.nombre)}</td><td>${M.ases.length}</td><td>${fmtN(PC.sugAg[k])}</td><td class="lever-col"><input id="pp_ag" class="lev-md${fijAg ? ' ov' : ''}" type="text" inputmode="numeric" data-pres="promAg" value="${vAg}" ${ed ? '' : 'disabled'}>${fijAg && ed ? ' <button class="btn lnk" data-presresetag="1">sugerido</button>' : ''}</td><td>${sgn(hist ? vAg / hist - 1 : null)}</td></tr></tbody></table></div>`;
+  const tablaCat = `<div class="scroll"><table><thead><tr><th>Categoría</th><th>Asesores</th><th>Sugerido (USD)</th><th class="lever-col">Fijado por Presidencia (USD)</th><th>vs promedio histórico</th><th>Mínimo colocación mes Tabla 1.1 (USD)</th></tr></thead><tbody>${filasCat}</tbody></table></div>`;
+  const tablaAse = `<div class="scroll"><table><thead><tr><th class="l">Asesor</th><th class="l">Categoría</th><th>Sugerido por categoría (USD)</th><th class="lever-col">Fijado por Presidencia (USD)</th><th>vs promedio histórico</th><th>Mínimo colocación mes Tabla 1.1 (USD)</th></tr></thead><tbody>
+    ${M.ases.map((x, i) => { const fj = +((pres.promAse || {})[x.id]) > 0, v = pa[i] || 0;
+      return `<tr><td class="l">${esc(x.n)}</td><td class="l">${esc(x.categ)}</td><td>${fmtN(PC.ag[k][x.categ])}</td><td class="lever-col"><input id="pa_${i}" class="lev-md${fj ? ' ov' : ''}" type="text" inputmode="numeric" data-pres="promAse" data-pase="${esc(x.id)}" value="${v}" ${ed ? '' : 'disabled'}>${fj && ed ? ` <button class="btn lnk" data-presresetase="${esc(x.id)}">sugerido</button>` : ''}</td><td>${sgn(hist ? v / hist - 1 : null)}</td><td>${fmtN((E.NORMA.cat[x.categ] || {}).m || 0) || '—'}</td></tr>`; }).join('')}</tbody></table></div>`;
+  const selModo = `<div class="seg modoprom">${[['agencia', 'Toda la agencia'], ['categoria', 'Por categoría'], ['asesor', 'Por asesor']].map(([v, l]) => `<button class="btn ${modo === v ? 'pri' : ''}" data-modoprom="${v}" ${ed ? '' : 'disabled'}>${l}</button>`).join('')}</div>`;
+  const tablaProm = modo === 'agencia' ? tablaAg : modo === 'asesor' ? tablaAse : tablaCat;
+  const notaProm = modo === 'agencia' ? `Un solo monto para todos los asesores. Sugerido = promedio 2026 de la agencia redondeado a múltiplos de ${fmtN(PC.paso)}.`
+    : modo === 'asesor' ? 'Cada asesor parte del monto de su categoría; Presidencia puede fijar un monto distinto a cualquiera.'
+    : `Sugerido = promedio 2026 × coeficiente de la categoría, redondeado a múltiplos de ${fmtN(PC.paso)}.`;
   const av = M.avisos.filter(x => x.n !== 'info'), info = M.avisos.filter(x => x.n === 'info');
   const ok = pres.ok;
   return `<section class="card meta" id="panelAg">
@@ -1435,16 +1460,16 @@ function panelAgencia(k) {
     </div>
     <div class="note small">Jefe de Agencia: ${esc(a.jefe || '—')} · ${M.ases.length} asesores · ${E.sum(M.D)} días-asesor laborables en 2027 (feriados nacionales y locales y vacaciones descontados) · saldo dic-2026 ${fmtN(F.saldo[12])} USD (${hayP ? 'pronóstico' : 'real'}) · recuperación mensual promedio ${fmtN(M.p.recRate * 100, 2)} %.</div>
     <div class="levers" style="margin-top:12px">
-      <div class="lever"><label for="pp_cpd">Créditos por día laborable por asesor</label>
-        <div class="levin"><input id="pp_cpd" type="text" inputmode="decimal" data-pres="cpd" value="${decTxt(cpdAg(k), 2)}" ${ed ? '' : 'disabled'}></div>
-        <div class="small muted">${+pres.cpd > 0 ? `Fijado por Presidencia · sugerido por el escenario: ${fmtN(cpdSug(k), 2)}${ed ? ' <button class="btn lnk" data-cpdreset="1">usar sugerido</button>' : ''}` : `Sugerido por el escenario ${esc(escParams(escActual()).nombre)} y el apetito de ${fmtN((+meta().g) * 100, 1)} %`}. 2026: ${fmtN(cpdHist(k), 2)} por día. Norma: 1,00.</div></div>
+      <div class="lever info"><div class="ll">Créditos por día laborable por asesor</div>
+        <div class="big">${fmtN(cpdAg(k), 2)}</div>
+        <div class="small muted">Lo calcula el escenario ${esc(escParams(escActual()).nombre)} con el crecimiento de ${fmtN((+meta().g) * 100, 1)} % de la pestaña Mercado. 2026: ${fmtN(cpdHist(k), 2)} por día · norma: 1,00.</div></div>
       <div class="lever res"><div class="ll">Resultado 2027</div>
         <div class="big">${fmtM(P.saldo[12])} <span>USD millones de saldo</span></div>
         <div class="small">Cartera ${sgn(dpct(P.saldo[12], F.saldo[12]))} · colocación ${fmtM(E.sum(P.otm.slice(1)))} millones ${sgn(dpct(E.sum(P.otm.slice(1)), o26))} · ${fmtN(E.sum(P.otn.slice(1)))} créditos</div></div>
     </div>
-    <h3>Monto promedio por categoría</h3>
-    <div class="scroll"><table><thead><tr><th>Categoría</th><th>Asesores</th><th>Sugerido (USD)</th><th class="lever-col">Fijado por Presidencia (USD)</th><th>vs promedio histórico</th><th>Mínimo colocación mes Tabla 1.1 (USD)</th></tr></thead><tbody>${filasCat}</tbody></table></div>
-    <div class="note small" style="margin-top:6px">Promedio histórico de la agencia: USD ${fmtN(hist)} en 2026${y25p ? `, USD ${fmtN(y25p)} en 2025` : ''}. Sugerido = promedio 2026 × coeficiente de la categoría, redondeado a múltiplos de ${fmtN(PC.paso)}.</div>
+    <div class="hd" style="margin-top:14px"><h3 style="margin:0">Monto promedio</h3>${selModo}</div>
+    ${tablaProm}
+    <div class="note small" style="margin-top:6px">Promedio histórico de la agencia: USD ${fmtN(hist)} en 2026${y25p ? `, USD ${fmtN(y25p)} en 2025` : ''}. ${notaProm}</div>
     <h3>Avisos</h3>
     ${av.length ? `<ul class="val">${av.map(x => `<li class="${x.n === 'alto' ? 'flag' : ''}">${esc(x.t)}</li>`).join('')}</ul>` : '<p class="pos">Sin avisos: el plan está dentro de lo que la agencia ha logrado y de la normativa.</p>'}
     ${info.length ? `<details style="margin-top:6px"><summary class="small muted">Indicadores de riesgo frente a la normativa (${info.length})</summary><ul class="val small muted">${info.map(x => `<li>${esc(x.t)}</li>`).join('')}</ul></details>` : ''}
@@ -2041,6 +2066,9 @@ document.addEventListener('click', async ev => {
   if (d.escsug) { const sg = sugEsc(escActual()); guardarMeta(m => { if (d.escsug === 'g') m.g = Math.round(sg.g * 1000) / 1000; else m.mora30 = Math.round(sg.mora * 10000) / 10000; }); return; }
   if (d.psel) { S.presSel = d.psel; render(); setTimeout(() => { const el = $('#panelAg'); if (el) el.scrollIntoView({block: 'start'}); }, 60); return; }
   if (d.pnav) { const vis = visibles().map(v => v[0]); const i = vis.indexOf(S.presSel) + +d.pnav; if (vis[i]) { S.presSel = vis[i]; render(); setTimeout(() => { const el = $('#panelAg'); if (el) el.scrollIntoView({block: 'start'}); }, 60); } return; }
+  if (d.modoprom) { guardarPlan(S.presSel, p => { p.pres = Object.assign({}, p.pres || {}); p.pres.modoProm = d.modoprom; }); return; }
+  if (d.presresetag) { guardarPlan(S.presSel, p => { p.pres = Object.assign({}, p.pres || {}); delete p.pres.promAg; }); return; }
+  if (d.presresetase) { guardarPlan(S.presSel, p => { p.pres = Object.assign({}, p.pres || {}); p.pres.promAse = Object.assign({}, p.pres.promAse || {}); delete p.pres.promAse[d.presresetase]; }); return; }
   if (d.cpdreset) { guardarPlan(S.presSel, p => { p.pres = Object.assign({}, p.pres || {}); delete p.pres.cpd; }); return; }
   if (d.presreset) { guardarPlan(S.presSel, p => { p.pres = Object.assign({}, p.pres || {}); p.pres.prom = Object.assign({}, p.pres.prom || {}); delete p.pres.prom[d.presreset]; }); return; }
   if (d.presok) { const v = d.presok === '1'; guardarPlan(S.presSel, p => { p.pres = Object.assign({}, p.pres || {}, {ok: v, f: new Date().toISOString(), uid: S.me.id}); }, true); toast(v ? 'Parámetros aprobados.' : 'Parámetros reabiertos.'); return; }
@@ -2095,7 +2123,7 @@ document.addEventListener('change', ev => {
     const v = n === null ? null : Math.max(0, f === 'otnMes' ? Math.round(n) : n);
     guardarPlan(k, p => { const arr = Array.isArray(p[f]) && p[f].length === 12 ? p[f].slice() : Array(12).fill(null); arr[i] = v; p[f] = arr.some(x => x !== null) ? arr : null; }); return;
   }
-  if (d.mfil) { const f = Object.assign({reg: '', zona: ''}, S.mfil || {}); f[d.mfil] = t.value; if (d.mfil === 'reg') f.zona = ''; S.mfil = f; render(); return; }
+  if (d.mfil) { const f = Object.assign({reg: '', zona: '', tipo: ''}, S.mfil || {}); f[d.mfil] = t.value; if (d.mfil === 'reg') f.zona = ''; S.mfil = f; render(); return; }
   if (d.pfil) {
     const vis = visibles();
     if (d.pfil === 'ag') S.presSel = t.value;
@@ -2104,7 +2132,7 @@ document.addEventListener('change', ev => {
   }
   if (d.pres) {
     const n = parseDec(t.value); if (n === null || isNaN(n) || n < 0) { toast('Escribe un número, por ejemplo 1,2 o 4500.'); render(); return; }
-    guardarPlan(S.presSel, p => { p.pres = Object.assign({}, p.pres || {}); if (d.pres === 'cpd') p.pres.cpd = n; else { p.pres.prom = Object.assign({}, p.pres.prom || {}); p.pres.prom[d.pcat] = Math.round(n); } }); return;
+    guardarPlan(S.presSel, p => { p.pres = Object.assign({}, p.pres || {}); if (d.pres === 'cpd') return; if (d.pres === 'promAg') { p.pres.promAg = Math.round(n); return; } if (d.pres === 'promAse') { p.pres.promAse = Object.assign({}, p.pres.promAse || {}); p.pres.promAse[d.pase] = Math.round(n); return; } { p.pres.prom = Object.assign({}, p.pres.prom || {}); p.pres.prom[d.pcat] = Math.round(n); } }); return;
   }
   if (d.meta) {
     const num = parseDec(t.value);
