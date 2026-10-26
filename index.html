@@ -67,6 +67,7 @@ th{font:600 10.5px var(--font-head);letter-spacing:.5px;text-transform:uppercase
 th:first-child,td:first-child{text-align:left;position:sticky;left:0;background:var(--surface);z-index:1}
 td.l,th.l{text-align:left}
 td.wrap{white-space:normal;min-width:280px}
+tr.sd td{color:var(--ink-3)}
 tr.sub td{font-weight:600;background:var(--line-2)}
 tr.sub td:first-child{background:var(--line-2)}
 tr.tot td{font-weight:600;border-top:2px solid var(--ink-2)}
@@ -153,7 +154,10 @@ input.lev-md{width:96px;text-align:right;border:2px solid var(--brand);font:700 
 .card.login label{font-size:12px;color:var(--ink-2);margin-top:4px}.lg-brand{display:flex;gap:12px;align-items:center;margin-bottom:8px}.lg-t{font:700 22px var(--font-head);letter-spacing:.5px}
 .param #nu_nom,.param #nu_mail{width:100%;min-width:190px}.param #nu_pass{min-width:120px}
 .lg-err{color:var(--neg);font-size:12px;min-height:16px}.lg-btn{width:100%;justify-content:center;padding:11px}
-.modoprom{display:flex;gap:6px;flex-wrap:wrap}.lever.info .big{font:600 30px var(--font-head)}
+.instr{display:flex;flex-wrap:wrap;align-items:center;gap:10px;font-size:13px;margin-bottom:8px}.modoprom{display:flex;gap:6px;flex-wrap:wrap}.lever.info .big{font:600 30px var(--font-head)}
+.mtipo{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:2px 0 12px}.mgrp{display:inline-flex;flex-wrap:wrap;gap:4px;padding:3px;border:1px solid var(--line);border-radius:999px}
+.mchip{font:500 12px var(--font-body,inherit);border:1px solid var(--line);background:var(--surface);color:var(--ink-2);border-radius:999px;padding:4px 10px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.mchip i{width:9px;height:9px;border-radius:2px}.mchip.g{font-weight:700}.mchip.on{background:var(--ink);color:var(--surface);border-color:var(--ink)}
 .escsug{display:grid;grid-template-columns:1fr 1fr;gap:8px}.escsug div{display:grid}.escsug b{font:600 22px var(--font-head);font-variant-numeric:tabular-nums}
 .esc .en{font:700 13px var(--font-head);text-transform:uppercase;letter-spacing:.5px}
 table.mini th,table.mini td{padding:2px 6px;font-size:11px}
@@ -1192,7 +1196,7 @@ function facesAg(k) {
     r24: y ? y.c30[0] : 0, r25: y ? y.c30[12] : F.c30[0], rA: F.c30[iA], r26: F.c30[12], iA};
 }
 const TIPO_SEG = {SB: ['BANCA PRIVADA', 'BANCA PUBLICA'], SEPS: ['S1', 'S2', 'S3', 'MUT']};
-const segsTipo = (MK, t) => TIPO_SEG[t] ? MK.segs.filter(sg => TIPO_SEG[t].includes(sg)) : MK.segs;
+const segsSel = (MK, sel) => Array.isArray(sel) && sel.length ? MK.segs.filter(sg => sel.includes(sg)) : MK.segs;
 function mercadoAlcance(MK, keys, segs) {
   segs = segs || MK.segs;
   const cants = [...new Set(keys.map(k => AG_CANT[k]).filter(c => MK.cant[c]))];
@@ -1251,7 +1255,9 @@ function vistaMercado() {
   const regs = [...new Set(todas.map(k => S.ag[k].reg))].sort();
   const zonas = [...new Set(todas.filter(k => !F0.reg || S.ag[k].reg === F0.reg).map(k => S.ag[k].zona))].sort();
   const keys = todas.filter(k => (!F0.reg || S.ag[k].reg === F0.reg) && (!F0.zona || S.ag[k].zona === F0.zona));
-  const SEGS = segsTipo(MK, F0.tipo), TIPL = {SB: 'SB · banca privada y pública', SEPS: 'SEPS · cooperativas S1–S3 y mutualistas'}[F0.tipo] || '';
+  const selS = Array.isArray(F0.segs) ? F0.segs.filter(x => MK.segs.includes(x)) : [];
+  const SEGS = segsSel(MK, selS);
+  const TIPL = !selS.length || selS.length === MK.segs.length ? '' : TIPO_SEG.SB.every(x => selS.includes(x)) && selS.length === 2 ? 'SB' : TIPO_SEG.SEPS.every(x => selS.includes(x)) && selS.length === 4 ? 'SEPS' : selS.map(x => SEG_N[x]).join(', ');
   const A = mercadoAlcance(MK, keys, SEGS), fa = A.fa;
   const i24 = A.iD('2024-12'), i25 = A.iD('2025-12'), iA = A.nf - 1;
   const mk = i => A.tot[i].c, mr = i => A.tot[i].c ? A.tot[i].r / A.tot[i].c : 0;
@@ -1264,8 +1270,13 @@ function vistaMercado() {
   const filtro = `<div class="toolbar">
       <label for="mf_reg" class="muted">Región</label><select id="mf_reg" data-mfil="reg"><option value="">Todas</option>${regs.map(r => `<option ${r === F0.reg ? 'selected' : ''}>${esc(r)}</option>`).join('')}</select>
       <label for="mf_zona" class="muted">Zona</label><select id="mf_zona" data-mfil="zona"><option value="">Todas</option>${zonas.map(z => `<option ${z === F0.zona ? 'selected' : ''}>${esc(z)}</option>`).join('')}</select>
-      <label for="mf_tipo" class="muted">Tipo de entidad</label><select id="mf_tipo" data-mfil="tipo"><option value="">Todas</option><option value="SB" ${F0.tipo === 'SB' ? 'selected' : ''}>SB · Banca privada y pública</option><option value="SEPS" ${F0.tipo === 'SEPS' ? 'selected' : ''}>SEPS · Segmentos 1, 2, 3 y mutualistas</option></select>
       <span class="muted small">${keys.length} agencias · ${A.cants.length} cantones</span></div>`;
+  const chip = (sg, l) => `<button class="mchip ${selS.includes(sg) ? 'on' : ''}" data-mseg="${sg}" aria-pressed="${selS.includes(sg)}"><i style="background:${SEG_COL[sg]}"></i>${l}</button>`;
+  const grpOn = g => TIPO_SEG[g].every(x => selS.includes(x));
+  const filtroTipo = `<div class="mtipo"><span class="muted small">Tipo de entidad</span>
+      <button class="mchip ${!selS.length ? 'on' : ''}" data-mseg="*">Todas</button>
+      <span class="mgrp"><button class="mchip g ${grpOn('SB') ? 'on' : ''}" data-mseg="SB">SB</button>${chip('BANCA PRIVADA', 'Banca privada')}${chip('BANCA PUBLICA', 'Banca pública')}</span>
+      <span class="mgrp"><button class="mchip g ${grpOn('SEPS') ? 'on' : ''}" data-mseg="SEPS">SEPS</button>${chip('S1', 'Segmento 1')}${chip('S2', 'Segmento 2')}${chip('S3', 'Segmento 3')}${chip('MUT', 'Mutualistas')}</span></div>`;
   const kpis = `<div class="kpis">
     <div class="kpi k1"><div class="l">Mercado de microcrédito · ${corteL}</div><div class="v">${fmtN(mk(iA) / 1e6, 1)}</div><div class="c">USD millones · ${nEnt} entidades en ${A.cants.length} cantones</div></div>
     <div class="kpi k2"><div class="l">Crecimiento del mercado 2025</div><div class="v">${g25 == null ? '—' : fmtN(g25 * 100, 1) + ' %'}</div><div class="c">2026 ene–ago: ${sgn(gA)} · FACES 2025: ${sgn(fg25)} · 2026 ene–ago: ${sgn(fgA)}</div></div>
@@ -1328,7 +1339,7 @@ function vistaMercado() {
     tip: `${r.c} · agencias: ${r.ks.map(k => S.ag[k].nombre).join(', ')} · líder: ${r.lid} · mora mercado ${fmtP(r.rA / r.cA)}`})).join('')}</div>
     <div class="legend"><span><i style="background:${SEG_COL.FACES}"></i>Participación FACES en el cantón</span><span class="muted">Cifra a la derecha: variación del mercado 2026 (ene–ago)</span></div>`;
   const cCant = tarjeta('cant', 'Participación FACES por cantón', `${esc(alc)} · ${corteL}`, gCant, tCant, `${esc(MK.fuente)} Corte ${esc(MK.corte)}. La base llega hasta cantón: Amaguaña, Quinche y Tumbaco se comparan con todo Quito y Malacatos con todo Loja.`, 'wide');
-  return `<section class="card"><div class="hd"><h2>Mercado de microcrédito</h2><span class="muted small">Referencia para la planificación 2027 · ${esc(alc)}</span></div>${filtro}${kpis}</section>`
+  return `<section class="card"><div class="hd"><h2>Mercado de microcrédito</h2><span class="muted small">Referencia para la planificación 2027 · ${esc(alc)}</span></div>${filtro}${filtroTipo}${kpis}</section>`
     + `<div class="dgrid">${cEvol}${cMora}${cTipo}${cVs}${cComp}${cCant}</div>` + decisionCard();
 }
 /* Colores del tablero de mercado (paleta FACES; validada para daltonismo con etiquetas directas) */
@@ -1400,6 +1411,12 @@ function filaComp(l, a25, a26, a27, d, M) {
   const f = v => v == null ? '' : M ? fmtM(v) : fmtN(v, d || 0);
   return `<tr><td>${l}</td><td>${f(a25)}</td><td>${f(a26)}</td><td><b>${f(a27)}</b></td><td>${a26 != null ? f(a27 - a26) : ''}</td><td>${sgn(dpct(a27, a26))}</td></tr>`;
 }
+function filaCer(l, a25, a26, a27, tope) {
+  const r = x => x && x[1] > 0 ? x[0] / x[1] : null, v25 = r(a25), v26 = r(a26), v27 = r(a27);
+  const cel = (v, x) => v == null ? '<td></td>' : `<td><span class="${v > tope + 1e-9 ? 'neg' : ''}">${fmtP(v)}</span><div class="muted small">${fmtN(x[0] / 1e6, 2)} M</div></td>`;
+  const d = v27 != null && v26 != null ? v27 - v26 : null;
+  return `<tr><td>${l} (% · USD millones)<div class="muted small">Máximo normativo ${fmtP(tope)} (Tabla 1.1)</div></td>${cel(v25, a25)}${cel(v26, a26)}${v27 == null ? '<td></td>' : `<td><b class="${v27 > tope + 1e-9 ? 'neg' : ''}">${fmtP(v27)}</b><div class="muted small">${fmtN(a27[0] / 1e6, 2)} M</div></td>`}<td>${d == null ? '' : `<span class="${d > 0 ? 'neg' : 'pos'}">${d >= 0 ? '+' : ''}${fmtN(d * 100, 2)} pp</span>`}</td><td></td></tr>`;
+}
 function tablaComparativa(y25, F, P, nA, diasAses, hayP) {
   const sm = (s, k) => s ? E.sum(s[k].slice(1)) : null;
   const rec = s => s ? sm(s, 'cuo') + sm(s, 'prr') + sm(s, 'prt') : null;
@@ -1412,10 +1429,13 @@ function tablaComparativa(y25, F, P, nA, diasAses, hayP) {
     ${filaComp('Créditos otorgados (N.º)', n25, n26, n27)}
     ${filaComp('Monto promedio de crédito (USD)', n25 ? o25 / n25 : null, n26 ? o26 / n26 : null, n27 ? o27 / n27 : 0)}
     ${filaComp('Recuperación anual (USD millones)', rec(y25), rec(F), E.sum(P.recup.slice(1)), 0, true)}
+    ${filaCer('CER > 1 a diciembre', y25 ? [y25.c1[12], y25.saldo[12]] : null, [F.c1[12], F.saldo[12]], [P.c1[12], P.saldo[12]], E.NORMA.cer1)}
+    ${filaCer('CER > 30 a diciembre', y25 ? [y25.c30[12], y25.saldo[12]] : null, [F.c30[12], F.saldo[12]], [P.c30[12], P.saldo[12]], E.NORMA.cer30)}
+    <tr class="sd"><td>CER > 90 a diciembre</td><td>s/d</td><td>s/d</td><td>s/d</td><td></td><td></td></tr>
     ${filaComp('Saldo de cartera promedio por asesor (USD)', null, F.saldo[12] / nA, P.saldo[12] / nA)}
     ${filaComp('Clientes promedio por asesor (operaciones vigentes)', null, F.vgn[12] / nA, P.vgn[12] / nA)}
     ${filaComp('Créditos por asesor por día laborable (N.º)', null, null, diasAses ? n27 / diasAses : 0, 2)}
-  </tbody></table></div>`;
+  </tbody></table></div><div class="note small" style="margin-top:6px">CER = cartera en riesgo / saldo de cartera. CER > 90: s/d, el Cumplimiento Mensual no trae la cartera con más de 90 días de atraso.</div>`;
 }
 function panelAgencia(k) {
   const a = S.ag[k], M = modelo(k); if (!M) return '';
@@ -1467,20 +1487,24 @@ function panelAgencia(k) {
         <div class="big">${fmtM(P.saldo[12])} <span>USD millones de saldo</span></div>
         <div class="small">Cartera ${sgn(dpct(P.saldo[12], F.saldo[12]))} · colocación ${fmtM(E.sum(P.otm.slice(1)))} millones ${sgn(dpct(E.sum(P.otm.slice(1)), o26))} · ${fmtN(E.sum(P.otn.slice(1)))} créditos</div></div>
     </div>
-    <div class="hd" style="margin-top:14px"><h3 style="margin:0">Monto promedio</h3>${selModo}</div>
+    <h3 style="margin-top:14px">Monto promedio de crédito</h3><div class="instr">Escoge bajo qué criterio quieres establecer el monto promedio de crédito de la agencia: ${selModo}</div>
     ${tablaProm}
     <div class="note small" style="margin-top:6px">Promedio histórico de la agencia: USD ${fmtN(hist)} en 2026${y25p ? `, USD ${fmtN(y25p)} en 2025` : ''}. ${notaProm}</div>
     <h3>Avisos</h3>
     ${av.length ? `<ul class="val">${av.map(x => `<li class="${x.n === 'alto' ? 'flag' : ''}">${esc(x.t)}</li>`).join('')}</ul>` : '<p class="pos">Sin avisos: el plan está dentro de lo que la agencia ha logrado y de la normativa.</p>'}
     ${info.length ? `<details style="margin-top:6px"><summary class="small muted">Indicadores de riesgo frente a la normativa (${info.length})</summary><ul class="val small muted">${info.map(x => `<li>${esc(x.t)}</li>`).join('')}</ul></details>` : ''}
-    <h3>Resultado de la agencia</h3>${tablaComparativa(y25, F, P, nA, E.sum(M.D), hayP)}
+    <h3>Principales resultados de la agencia</h3>${tablaComparativa(y25, F, P, nA, E.sum(M.D), hayP)}
     <div class="scroll" style="margin-top:10px"><table><thead><tr><th>Plan mensual 2027</th>${MES.map(m => `<th>${m}<span class="mk L"></span>PLAN</th>`).join('')}<th>Total</th></tr></thead><tbody>
       <tr><td>Días-asesor laborables</td>${M.D.map(v => `<td>${fmtN(v)}</td>`).join('')}<td>${fmtN(E.sum(M.D))}</td></tr>
       <tr><td>Créditos otorgados</td>${P.otn.slice(1).map(v => `<td>${fmtN(v)}</td>`).join('')}<td><b>${fmtN(E.sum(P.otn.slice(1)))}</b></td></tr>
       <tr><td>Colocación (USD)</td>${P.otm.slice(1).map(v => `<td>${fmtN(v)}</td>`).join('')}<td><b>${fmtN(E.sum(P.otm.slice(1)))}</b></td></tr>
+      <tr><td>Recuperación (USD)</td>${P.recup.slice(1).map(v => `<td>${fmtN(v)}</td>`).join('')}<td><b>${fmtN(E.sum(P.recup.slice(1)))}</b></td></tr>
       <tr><td>Saldo de cartera (USD)</td>${P.saldo.slice(1).map(v => `<td>${fmtN(v)}</td>`).join('')}<td><b>${fmtN(P.saldo[12])}</b></td></tr>
+      <tr><td>CER > 1 (%)</td>${P.saldo.slice(1).map((v, i) => { const x = v > 0 ? P.c1[i + 1] / v : null; return `<td class="${x > E.NORMA.cer1 + 1e-9 ? 'neg' : ''}">${fmtP(x)}</td>`; }).join('')}<td><b>${fmtP(P.saldo[12] ? P.c1[12] / P.saldo[12] : null)}</b></td></tr>
+      <tr><td>CER > 30 (%)</td>${P.saldo.slice(1).map((v, i) => { const x = v > 0 ? P.c30[i + 1] / v : null; return `<td class="${x > E.NORMA.cer30 + 1e-9 ? 'neg' : ''}">${fmtP(x)}</td>`; }).join('')}<td><b>${fmtP(P.saldo[12] ? P.c30[12] / P.saldo[12] : null)}</b></td></tr>
+      <tr class="sd"><td>CER > 90 (%)</td>${MES.map(() => '<td>s/d</td>').join('')}<td>s/d</td></tr>
     </tbody></table></div>
-    <div class="note small" style="margin-top:6px">Los créditos del año son créditos por día × días-asesor laborables; se reparten en los meses con la estacionalidad histórica de la agencia, ajustada por vacaciones y feriados de cada mes.</div>
+    <div class="note small" style="margin-top:6px">Recuperación = cuotas + precancelaciones (incluidas las de renovación) con la tasa real de la agencia y su estacionalidad. CER en rojo: sobre el máximo de la Tabla 1.1 (CER > 1: 6 %, CER > 30: 4 %). Los créditos del año son créditos por día × días-asesor laborables; se reparten en los meses con la estacionalidad histórica de la agencia, ajustada por vacaciones y feriados de cada mes.</div>
     ${puedePres() ? `<div class="bar" style="margin-top:12px"><button class="btn pri" data-presok="${ok ? 0 : 1}">${ok ? 'Reabrir parámetros' : 'Aprobar parámetros de la agencia'}</button>${idx < vis.length - 1 ? '<button class="btn" data-pnav="1">Siguiente agencia</button>' : ''}</div>` : ''}
   </section>`;
 }
@@ -2066,6 +2090,15 @@ document.addEventListener('click', async ev => {
   if (d.escsug) { const sg = sugEsc(escActual()); guardarMeta(m => { if (d.escsug === 'g') m.g = Math.round(sg.g * 1000) / 1000; else m.mora30 = Math.round(sg.mora * 10000) / 10000; }); return; }
   if (d.psel) { S.presSel = d.psel; render(); setTimeout(() => { const el = $('#panelAg'); if (el) el.scrollIntoView({block: 'start'}); }, 60); return; }
   if (d.pnav) { const vis = visibles().map(v => v[0]); const i = vis.indexOf(S.presSel) + +d.pnav; if (vis[i]) { S.presSel = vis[i]; render(); setTimeout(() => { const el = $('#panelAg'); if (el) el.scrollIntoView({block: 'start'}); }, 60); } return; }
+  if (d.mseg) {
+    const f = Object.assign({reg: '', zona: '', segs: []}, S.mfil || {}), all = (S.mercado && S.mercado.segs) || [];
+    let cur = (Array.isArray(f.segs) ? f.segs : []).slice();
+    if (d.mseg === '*') cur = [];
+    else if (TIPO_SEG[d.mseg]) { const g = TIPO_SEG[d.mseg], on = g.every(x => cur.includes(x)); cur = on ? cur.filter(x => !g.includes(x)) : [...new Set(cur.concat(g))]; }
+    else cur = cur.includes(d.mseg) ? cur.filter(x => x !== d.mseg) : cur.concat([d.mseg]);
+    if (cur.length === all.length) cur = [];
+    f.segs = cur; S.mfil = f; render(); return;
+  }
   if (d.modoprom) { guardarPlan(S.presSel, p => { p.pres = Object.assign({}, p.pres || {}); p.pres.modoProm = d.modoprom; }); return; }
   if (d.presresetag) { guardarPlan(S.presSel, p => { p.pres = Object.assign({}, p.pres || {}); delete p.pres.promAg; }); return; }
   if (d.presresetase) { guardarPlan(S.presSel, p => { p.pres = Object.assign({}, p.pres || {}); p.pres.promAse = Object.assign({}, p.pres.promAse || {}); delete p.pres.promAse[d.presresetase]; }); return; }
@@ -2123,7 +2156,7 @@ document.addEventListener('change', ev => {
     const v = n === null ? null : Math.max(0, f === 'otnMes' ? Math.round(n) : n);
     guardarPlan(k, p => { const arr = Array.isArray(p[f]) && p[f].length === 12 ? p[f].slice() : Array(12).fill(null); arr[i] = v; p[f] = arr.some(x => x !== null) ? arr : null; }); return;
   }
-  if (d.mfil) { const f = Object.assign({reg: '', zona: '', tipo: ''}, S.mfil || {}); f[d.mfil] = t.value; if (d.mfil === 'reg') f.zona = ''; S.mfil = f; render(); return; }
+  if (d.mfil) { const f = Object.assign({reg: '', zona: '', segs: []}, S.mfil || {}); f[d.mfil] = t.value; if (d.mfil === 'reg') f.zona = ''; S.mfil = f; render(); return; }
   if (d.pfil) {
     const vis = visibles();
     if (d.pfil === 'ag') S.presSel = t.value;
