@@ -29,7 +29,7 @@
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:13px;line-height:1.45;margin:0}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
-.wrap{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));max-width:1400px;margin:0 auto}
+.wrap{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));max-width:1720px;margin:0 auto}
 header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line)}
 .top .row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding-block:10px 6px}
 .ttl{display:flex;gap:12px;align-items:center;min-width:0}
@@ -61,12 +61,14 @@ h3{font-family:var(--font-head);font-weight:600;font-size:12px;letter-spacing:.6
 .kpi .c{font-size:12px;color:var(--ink-2);margin-top:2px;font-variant-numeric:tabular-nums}
 .pos{color:var(--pos)}.neg{color:var(--neg)}
 .scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%}
-table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;font-size:12px}
-th,td{padding:5px 8px;border-bottom:1px solid var(--line-2);text-align:right;white-space:nowrap}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;font-size:11.5px}
+th,td{padding:4px 5px;border-bottom:1px solid var(--line-2);text-align:right;white-space:nowrap}
+th{white-space:normal;line-height:1.2;min-width:52px}
+td:first-child{white-space:normal;min-width:150px;max-width:260px}
 th{font:600 10.5px var(--font-head);letter-spacing:.5px;text-transform:uppercase;color:var(--ink-2);border-bottom:1px solid var(--line);vertical-align:bottom}
 th:first-child,td:first-child{text-align:left;position:sticky;left:0;background:var(--surface);z-index:1}
 td.l,th.l{text-align:left}
-td.wrap{white-space:normal;min-width:280px}
+td.wrap{white-space:normal;min-width:170px}
 tr.sd td{color:var(--ink-3)}
 tr.sub td{font-weight:600;background:var(--line-2)}
 tr.sub td:first-child{background:var(--line-2)}
@@ -158,6 +160,29 @@ input.lev-md{width:96px;text-align:right;border:2px solid var(--brand);font:700 
 .mtipo{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:2px 0 12px}.mgrp{display:inline-flex;flex-wrap:wrap;gap:4px;padding:3px;border:1px solid var(--line);border-radius:999px}
 .mchip{font:500 12px var(--font-body,inherit);border:1px solid var(--line);background:var(--surface);color:var(--ink-2);border-radius:999px;padding:4px 10px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
 .mchip i{width:9px;height:9px;border-radius:2px}.mchip.g{font-weight:700}.mchip.on{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+input.cel{width:100%;min-width:50px;box-sizing:border-box;text-align:right;font:inherit;padding:3px 5px;border:1px solid var(--line);border-radius:5px;background:var(--surface);color:var(--ink)}input.cel.tot{min-width:62px;font-weight:600}input.cel.ov{border-color:var(--brand);background:#fff5f4}
+.editbox{border:2px solid var(--brand);background:#fff7f6;border-radius:10px;padding:12px 14px;margin:12px 0}.editbox .eb-h{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:8px}.editbox .eb-h .btn{margin-left:auto}
+.editbox .eb-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}.editbox label{display:block;font:600 12px var(--font-head);letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px}.editbox input{width:160px}
+details.desp{border:1px solid var(--line);border-radius:10px;padding:8px 12px;margin:10px 0}details.desp summary{cursor:pointer;font:600 13px var(--font-head);letter-spacing:.5px}details.desp[open] summary{margin-bottom:8px}
+td.anom{background:#fdecea;color:var(--neg);box-shadow:inset 0 0 0 1px #f3b4ae;cursor:help}tr.editrow td input.cel{border-color:var(--brand)}tr.alerta td{background:#fdecea}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .editbox{background:#2a1d1c}:root:not([data-theme="light"]) td.anom,:root:not([data-theme="light"]) tr.alerta td{background:#3a2120}}
+tr.franja td{background:#e6efe9;font-weight:600;border-top:2px solid #4E7C64;border-bottom:2px solid #4E7C64}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) tr.franja td{background:#1f2e26}}
+@media (min-width:900px){#panelAg .lev-md{width:96px}#panelAg td.lever-col input{width:96px}}
+table.tasesores select{max-width:150px;font-size:11px}table.tasesores td:first-child{min-width:110px;max-width:150px;font-size:11px}table.tasesores td.wrap{min-width:110px;max-width:160px;font-size:11px}table.tasesores input{width:56px}table.tasesores th{font-size:10px}table.tasesores th,table.tasesores td{padding:4px 4px}
+tr.cerrow td.cerfin{background:var(--lever-bg)}tr.cerrow td:first-child{font-weight:600}
+.cerbox{display:flex;gap:8px;flex-wrap:wrap}.cerbox>span{display:grid;gap:2px}.cerbox input{width:78px!important}
+/* Fila señalada: al pasar el mouse (o tocar en el celular) toda la fila se resalta para leerla de corrido */
+table tbody tr:hover>td,table tbody tr:active>td{background:#fff1b8!important;color:var(--ink)}
+table tbody tr:hover>td:first-child{box-shadow:inset 4px 0 0 #E4271D}
+table tbody tr:hover>td.anom{color:var(--neg)}
+table tbody tr.grp:hover>td{background:var(--bg)!important;box-shadow:none}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) table tbody tr:hover>td,:root:not([data-theme="light"]) table tbody tr:active>td{background:#4a3f17!important;color:var(--ink)}}
+tr.selag>td,table tbody tr.selag:hover>td{background:#fbd0cc!important;font-weight:700}tr.selag>td:first-child{box-shadow:inset 5px 0 0 #E4271D}
+@keyframes flashAg{0%{box-shadow:0 0 0 4px #E4271D;background:#fde3e1}100%{box-shadow:0 0 0 0 transparent}}
+#panelAg.flash{animation:flashAg 1.4s ease-out}#panelAg.flash h2{animation:flashTxt 1.4s ease-out}
+@keyframes flashTxt{0%{color:#E4271D}100%{color:inherit}}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) tr.selag>td{background:#4a2321!important}}
 .escsug{display:grid;grid-template-columns:1fr 1fr;gap:8px}.escsug div{display:grid}.escsug b{font:600 22px var(--font-head);font-variant-numeric:tabular-nums}
 .esc .en{font:700 13px var(--font-head);text-transform:uppercase;letter-spacing:.5px}
 table.mini th,table.mini td{padding:2px 6px;font-size:11px}
@@ -491,6 +516,24 @@ const ENGINE = (() => {
     const m = sum(w) / 12; return w.map(v => v / m);
   }
 
+  /* Perfil estacional de los créditos cancelados 2027 (12 factores, promedio 1).
+     Tasa de cierre del mes = (vigentes ant. + otorgados − castigados − vigentes) / vigentes ant.
+     Por mes se promedian los años con dato real (2025 y meses reales 2026); mitad agencia, mitad FACES. */
+  function pesosCierre(listAg, listF) {
+    const perfil = list => {
+      const acc = Array(12).fill(0), n = Array(12).fill(0);
+      (list || []).forEach(o => { const y = o && o.y; if (!y || !y.vgn) return;
+        for (let i = 1; i <= Math.min(12, o.last); i++) { const vp = y.vgn[i - 1]; if (!(vp > 0)) continue;
+          const r = (vp + (y.otn[i] || 0) - (y.can[i] || 0) - y.vgn[i]) / vp; if (!(r >= 0) || r > 0.5) continue;
+          acc[i - 1] += r; n[i - 1]++; } });
+      if (n.some(x => x === 0)) return null;
+      const r = acc.map((v, i) => v / n[i]), m = sum(r) / 12; return m > 0 ? r.map(v => v / m) : null;
+    };
+    const a = perfil(listAg), f = perfil(listF);
+    const w = Array.from({ length: 12 }, (_, i) => clamp(a && f ? 0.5 * a[i] + 0.5 * f[i] : (a || f || [])[i] || 1, 0.7, 1.4));
+    const m = sum(w) / 12; return w.map(v => v / m);
+  }
+
   /* --------- 3. PLAN 2027 DE AGENCIA (Anexo 5) --------- */
   /* F: pronóstico 2026; p: parámetros (defaults ⊕ overrides); w: pesos mensuales; mix: {EXC,INA,RET,LIQ,COV} participación del subsecuente */
   /* otnMes / promMes: arreglos de 12 con valores manuales por mes (null = automático). sRec: perfil estacional de recuperación. */
@@ -541,14 +584,22 @@ const ENGINE = (() => {
       P.cast[m] = r2(Sp * p.castRate * (Array.isArray(p.castFact) ? p.castFact[m - 1] : 1));
       P.saldo[m] = r2(Sp + P.otm[m] - P.recup[m] - P.cast[m]);
       P.castn[m] = Math.round(Vp * p.castnRate);
-      P.canc[m] = Math.round(Vp * p.closeRate);
+      P.canc[m] = Math.round(Vp * p.closeRate * (Array.isArray(p.closeFact) ? p.closeFact[m - 1] : 1));
       P.vgn[m] = Vp + P.otn[m] - P.canc[m] - P.castn[m];
       P.dem[m] = r2(Sp * p.demRate); P.demn[m] = Math.round(Vp * p.demnRate);
-      P.pc1[m] = P.pc1[m - 1] * (1 - p.redC1);
-      P.pc15[m] = P.pc15[m - 1] * (1 - p.redC15);
-      P.pc30[m] = P.pc30[m - 1] * (1 - p.redC30);
-      P.c1[m] = r2(P.saldo[m] * P.pc1[m]); P.c15[m] = r2(P.saldo[m] * P.pc15[m]); P.c30[m] = r2(P.saldo[m] * P.pc30[m]);
+      /* Regla: el CER (monto y porcentaje) y los créditos en mora nunca suben frente al mes anterior.
+         Se aplica la reducción del escenario y, si el saldo crece más que esa reducción, un factor adicional para que el monto no suba. */
+      [['c1', 'pc1', p.redC1], ['c15', 'pc15', p.redC15], ['c30', 'pc30', p.redC30]].forEach(([c, pc, red]) => {
+        const obj = p.cerObj && Array.isArray(p.cerObj[pc]) ? p.cerObj[pc][m - 1] : null;
+        let x = obj != null && isFinite(obj) ? Math.min(P[pc][m - 1], Math.max(0, obj)) : P[pc][m - 1] * (1 - Math.max(0, red));
+        if (p.reglaMonto && P.saldo[m] > 0) x = Math.min(x, P[c][m - 1] / P.saldo[m]);
+        P[pc][m] = Math.max(0, x);
+        P[c][m] = r2(Math.max(0, P.saldo[m]) * P[pc][m]);
+        if (p.reglaMonto) P[c][m] = Math.min(P[c][m - 1], P[c][m]);
+        if (P.saldo[m] > 0) P[pc][m] = P[c][m] / P.saldo[m];
+      });
       P.moran[m] = Math.round(P.vgn[m] * moraRatio0 * (pc0.c1 > 0 ? P.pc1[m] / pc0.c1 : 1));
+      if (p.reglaMonto) P.moran[m] = Math.min(P.moran[m - 1], P.moran[m]);
       P.promo[m] = Math.round(p.promoAsesor * p.nAsesores);
       P.ases[m] = Math.round(P.promo[m] * p.fAsesoria);
       P.planif[m] = Math.round(P.otn[m] * p.fPlanif);
@@ -560,6 +611,7 @@ const ENGINE = (() => {
       const parts = cents(P.sum[m], cats.map(c => mix[c]));
       cats.forEach((c, i) => P.cat[c][m] = parts[i]);
     }
+    P.reglaMonto = !!p.reglaMonto;
     return P;
   }
 
@@ -586,6 +638,29 @@ const ENGINE = (() => {
     const saldo = r.saldo != null ? r.saldo : a.saldo, vig = r.vgn != null ? r.vgn : a.vig, c1 = r.c1 != null ? r.c1 : a.cer1;
     const c15 = r.c15 != null ? r.c15 : null, c30 = r.c30 != null ? r.c30 : null, c1n = r.c1n != null ? r.c1n : null;
     return { saldo, vig, c1, c15, c30, c1n };
+  }
+  /* Reparte un total en centavos según pesos sin que nadie supere su tope (su valor del mes anterior). */
+  function conTope(total, w, tope) {
+    let a = cents(total, w);
+    for (let it = 0; it < 30; it++) {
+      const exc = a.map((v, i) => Math.max(0, r2(v - tope[i])));
+      const E = r2(sum(exc)); if (E <= 0) break;
+      a = a.map((v, i) => Math.min(v, tope[i]));
+      const hol = a.map((v, i) => Math.max(0, r2(tope[i] - v)));
+      if (sum(hol) <= 0) break;
+      const add = cents(E, hol); a = a.map((v, i) => r2(v + add[i]));
+    }
+    return a;
+  }
+  function loteTope(total, w, tope) {
+    let a = lr(total, w);
+    for (let it = 0; it < 30; it++) {
+      const E = sum(a.map((v, i) => Math.max(0, v - tope[i]))); if (E <= 0) break;
+      a = a.map((v, i) => Math.min(v, tope[i]));
+      const hol = a.map((v, i) => Math.max(0, tope[i] - v)); if (sum(hol) <= 0) break;
+      const add = lr(E, hol); a = a.map((v, i) => v + add[i]);
+    }
+    return a;
   }
   function distribuir(P, ases, diasEf, diasMes, criterio) {
     const base = basePesos(ases, criterio);
@@ -625,9 +700,15 @@ const ENGINE = (() => {
       set('canc', m, lr(P.canc[m], vp));
       set('castn', m, lr(P.castn[m], vp));
       R.forEach(r => r.vgn[m] = r.vgn[m - 1] + r.otn[m] - r.canc[m] - r.castn[m]);
-      ['c1', 'c15', 'c30'].forEach(k => set(k, m, cents(P[k][m], R.map((r, i) => Math.max(0, r.saldo[m]) * rel[k][i]))));
+      ['c1', 'c15', 'c30'].forEach(k => { const pk = 'p' + k, lim0 = Math.floor(P[pk][m - 1] * Math.max(0, P.saldo[m]) * 100) / 100, lim = P.reglaMonto ? Math.min(P[k][m - 1], lim0) : lim0; if (P[k][m] > lim) { P[k][m] = lim; P[pk][m] = P.saldo[m] > 0 ? lim / P.saldo[m] : 0; } });
+      ['c1', 'c15', 'c30'].forEach(k => {
+        const pk = 'p' + k, tope = R.map(r => { const t = Math.floor(r[pk][m - 1] * Math.max(0, r.saldo[m]) * 100) / 100; return Math.max(0, P.reglaMonto ? Math.min(r[k][m - 1], t) : t); });
+        set(k, m, conTope(Math.min(P[k][m], r2(sum(tope))), R.map((r, i) => Math.max(0, r.saldo[m]) * rel[k][i]), tope));
+      });
+      /* si los topes de los asesores obligan a bajar más, el total de la agencia baja con ellos */
+      ['c1', 'c15', 'c30'].forEach(k => { const t = r2(sum(R.map(r => r[k][m]))); if (t < P[k][m]) { P[k][m] = t; P['p' + k][m] = P.saldo[m] > 0 ? t / P.saldo[m] : 0; } });
       R.forEach(r => { r.pc1[m] = r.saldo[m] > 0 ? r.c1[m] / r.saldo[m] : 0; r.pc15[m] = r.saldo[m] > 0 ? r.c15[m] / r.saldo[m] : 0; r.pc30[m] = r.saldo[m] > 0 ? r.c30[m] / r.saldo[m] : 0; });
-      set('moran', m, lr(P.moran[m], R.map(r => r.c1[m])));
+      { const tope = R.map(r => { const t = r.vgn[m - 1] > 0 ? Math.floor(r.moran[m - 1] / r.vgn[m - 1] * Math.max(0, r.vgn[m])) : 0; return P.reglaMonto ? Math.min(r.moran[m - 1], t) : t; }); if (sum(tope) < P.moran[m]) P.moran[m] = sum(tope); set('moran', m, loteTope(P.moran[m], R.map(r => r.c1[m]), tope)); }
       set('dem', m, cents(P.dem[m], sp)); set('demn', m, lr(P.demn[m], vp));
       set('recdem', m, cents(P.recdem[m], sp)); set('reccast', m, cents(P.reccast[m], sp));
       ['promo', 'ases', 'planif', 'solic', 'comi'].forEach(k => set(k, m, lr(P[k][m], w)));
@@ -711,7 +792,7 @@ const ENGINE = (() => {
     return { tipo: 'no', a, faltaS: Math.max(0, t.s - R.saldo[12]), faltaV: Math.max(0, t.v - R.vgn[12]) };
   }
 
-  return { creditosMes, reparto, basePesos, pesosMensuales, inicioAsesor, ascenso, ORDEN, T1, MESES, r2, sum, lr, cents, bizDaysIn, aggregate, forecast2026, defaultsDesde, pesosMes, pesosRec, plan2027, distribuir, NORMA, categoria, validarAgencia, validarAsesor, serie };
+  return { creditosMes, reparto, basePesos, pesosMensuales, inicioAsesor, ascenso, ORDEN, T1, MESES, r2, sum, lr, cents, bizDaysIn, aggregate, forecast2026, defaultsDesde, pesosMes, pesosRec, pesosCierre, plan2027, distribuir, NORMA, categoria, validarAgencia, validarAsesor, serie };
 })();
 if (typeof module !== 'undefined') module.exports = ENGINE;
 
@@ -930,13 +1011,91 @@ function optAg(k) {
   for (let i = 0; i < 24; i++) { const mid = (lo + hi) / 2; if (sal(mid) < obj) lo = mid; else hi = mid; }
   return (C[id] = {cpd: (lo + hi) / 2, fuente: `${mm.c} ${mm.a}: ${fmtP(mm.raw, 1)}${mm.raw > 0.25 ? ' (tope 25 %)' : ''}`, g: mm.g});
 }
+/* Peso estacional de la colocación: el de la agencia o el que fije Presidencia (se normaliza a 100 %). */
+function wAg(k) {
+  const q = prep(k), pw = (S.planes[k] || {}).pesoMes;
+  if (Array.isArray(pw) && pw.length === 12 && pw.some(v => v != null && v !== '')) {
+    const v = pw.map((x, i) => x != null && x !== '' && isFinite(x) ? Math.max(0, +x) : q.w[i] * 100), t = E.sum(v);
+    if (t > 0) return v.map(x => x / t);
+  }
+  return q.w;
+}
+/* Estacionalidad de los créditos cancelados: 2025 y meses reales 2026, mitad agencia y mitad FACES. */
+function pesosCierreAg(k) {
+  const C = cacheSol(), id = 'cierre_' + k; if (C[id]) return C[id];
+  let FF = C.cierreF;
+  if (!FF) {
+    FF = C.cierreF = [2025, 2026].map(a => { const z = {vgn: Array(13).fill(0), otn: Array(13).fill(0), can: Array(13).fill(0)}; let last = 12;
+      Object.keys(S.ag).forEach(kk => { const q = prep(kk); if (!q) return; const y = a === 2025 ? E.serie(S.ag[kk].hist, '2025') : q.F.s; if (!y) return; if (a === 2026) last = Math.min(last, q.F.last);
+        for (let m = 0; m <= 12; m++) ['vgn', 'otn', 'can'].forEach(f => z[f][m] += (y[f] || [])[m] || 0); });
+      return {y: z, last: a === 2025 ? 12 : last}; });
+  }
+  const q = prep(k), y25 = E.serie(S.ag[k].hist, '2025');
+  const lA = [y25 ? {y: y25, last: y25._m || 12} : null, {y: q.F.s, last: q.F.last}];
+  return (C[id] = E.pesosCierre(lA, FF));
+}
 function planAg(k, cpd, e, lam, _x) {
   const q = prep(k), A = asesoresAg(k), fx = factEsc(k, e);
-  const otn = E.creditosMes(cpd, A.D, A.Dnom, q.w, 0).map((v, m) => Math.round(v * fx.coloc[m]));
+  const W12 = wAg(k), oT = +((S.planes[k] || {}).otnTot);
+  let otn = E.creditosMes(cpd, A.D, A.Dnom, W12, 0).map((v, m) => Math.round(v * fx.coloc[m]));
+  if (oT > 0) otn = E.lr(Math.round(oT), E.sum(otn) > 0 ? otn : W12);
   const red = redCer(q, fx.mora, lam, e === 'opt' ? tendAg(k) : null);
-  const p = Object.assign({}, q.def, {otnAuto: otn, promAses: promAses(k), castFact: fx.cast, redC1: red, redC15: red, redC30: red, cpd});
-  return E.plan2027(q.F, p, q.w, q.mix, q.pl.otnMes, q.pl.promMes, q.sR);
+  const p = Object.assign({}, q.def, {otnAuto: otn, promAses: promAses(k), castFact: fx.cast, closeFact: pesosCierreAg(k), redC1: red, redC15: red, redC30: red, cpd, cerObj: cerObjAg(k), reglaMonto: false});
+  const colA = colAseAg(k);
+  if (!colA) return E.plan2027(q.F, p, W12, q.mix, q.pl.otnMes, q.pl.promMes, q.sR);
+  /* Colocación mensual fijada por asesor: el monto de la agencia sale de la suma de sus asesores. */
+  const P0 = E.plan2027(q.F, p, W12, q.mix, q.pl.otnMes, null, q.sR);
+  const pa = p.promAses, nA = pa.prom.length;
+  const avg = Array(nA).fill(0);
+  for (let m = 0; m < 12; m++) { const wm = pa.W[m].map((x, j) => x * (pa.prom[j] || 1)), t = E.sum(wm); if (t > 0) wm.forEach((x, j) => avg[j] += P0.otm[m + 1] * x / t / 12); }
+  const ids = asesoresAg(k).ases.map(x => x.id);
+  const metaCol = E.sum(ids.map((id, j) => +colA[id] > 0 ? +colA[id] * 12 : avg[j] * 12)), base = E.sum(P0.otm.slice(1));
+  const f = base > 0 ? metaCol / base : 1;
+  return E.plan2027(q.F, p, W12, q.mix, q.pl.otnMes, P0.prom.slice(1).map(v => Math.round(v * f * 100) / 100), q.sR);
 }
+/* Mora objetivo a dic-2027 fijada por Presidencia (pl.cerFin): la baja se reparte en los meses según el comportamiento histórico
+   de la mora en cada mes (2025 y meses reales de 2026; mitad agencia, mitad FACES). Los meses en que la mora suele bajar reciben más
+   reducción; los meses en que suele subir, menos. Nunca sube frente al mes anterior. */
+const CER_KEYS = {pc1: 'c1', pc15: 'c15', pc30: 'c30'};
+function cambiosCer(series, key) {
+  const c = CER_KEYS[key], d = Array(12).fill(0), n = Array(12).fill(0);
+  series.forEach(({y, last}) => { for (let m = 1; m <= last; m++) { if (y.saldo[m] > 0 && y.saldo[m - 1] > 0) { d[m - 1] += y[c][m] / y.saldo[m] - y[c][m - 1] / y.saldo[m - 1]; n[m - 1]++; } } });
+  return d.map((v, i) => n[i] ? v / n[i] : null);
+}
+function seriesAg(k) {
+  const q = prep(k), y = E.serie(S.ag[k].hist, '2025'), out = [];
+  if (y && y._m >= 12) out.push({y, last: 12});
+  if (q && q.F.last > 0) out.push({y: q.F.s, last: q.F.last});
+  return out;
+}
+function pesosCer(k, key) {
+  const C = cacheSol(), id = 'cerw_' + key + '_' + k; if (C[id]) return C[id];
+  let F = C['cerF_' + key];
+  if (!F) {
+    const agg = [2025, 2026].map(a => { const z = {saldo: Array(13).fill(0), c1: Array(13).fill(0), c15: Array(13).fill(0), c30: Array(13).fill(0)}; let last = 12;
+      Object.keys(S.ag).forEach(kk => { const q = prep(kk); if (!q) return; const y = a === 2025 ? E.serie(S.ag[kk].hist, '2025') : q.F.s; if (!y) return; if (a === 2026) last = Math.min(last, q.F.last);
+        for (let m = 0; m <= 12; m++) ['saldo', 'c1', 'c15', 'c30'].forEach(f => z[f][m] += y[f][m] || 0); });
+      return {y: z, last: a === 2025 ? 12 : last}; });
+    F = C['cerF_' + key] = cambiosCer(agg, key);
+  }
+  const A = cambiosCer(seriesAg(k), key);
+  const t = A.map((v, i) => v == null ? F[i] : F[i] == null ? v : 0.5 * v + 0.5 * F[i]).map(v => v || 0);
+  const ref = E.sum(t.map(Math.abs)) / 12 || 0.001;
+  const w = t.map(v => Math.max(0, -v) + 0.25 * ref);
+  const sw = E.sum(w);
+  return (C[id] = w.map(v => v / sw));
+}
+function cerObjAg(k) {
+  const fin = (S.planes[k] || {}).cerFin; if (!fin) return null;
+  const q = prep(k), F = q.F.s, out = {};
+  Object.keys(CER_KEYS).forEach(key => {
+    const v = +fin[key]; if (!(v >= 0) || fin[key] === '' || fin[key] == null) return;
+    const p0 = F.saldo[12] > 0 ? F[CER_KEYS[key]][12] / F.saldo[12] : 0, objF = Math.min(p0, v / 100), w = pesosCer(k, key);
+    let acc = 0; out[key] = w.map(x => { acc += x; return p0 - (p0 - objF) * acc; });
+  });
+  return Object.keys(out).length ? out : null;
+}
+const colAseAg = k => { const c = (S.planes[k] || {}).colAse; return c && Object.values(c).some(v => +v > 0) ? c : null; };
 const keysPlan = () => Object.keys(S.ag).filter(k => prep(k) && asesoresAg(k).ases.length);
 /* Totales FACES de un conjunto de créditos por día */
 function totEsc(keys, cpdDe, e, lam) {
@@ -1042,7 +1201,14 @@ function modelo(k) {
   const pl = q.pl;
   const pa = promCategorias().ase[k] || [];
   const ases = AA.ases.map((x, i) => Object.assign({}, x, {kc: pa[i] || pc[x.categ] || 1, promCat: pa[i] || pc[x.categ] || 0}));
-  const D = ases.length ? E.distribuir(P, ases, ases.map(x => x.diasEf), dias, pl.criterio || c.criterio) : {R: [], base: []};
+  let D = ases.length ? E.distribuir(P, ases, ases.map(x => x.diasEf), dias, pl.criterio || c.criterio) : {R: [], base: []};
+  const colA = colAseAg(k);
+  if (colA && ases.length) for (let it = 0; it < 6; it++) {
+    let ch = false;
+    ases.forEach((x, i) => { const t = +colA[x.id]; if (!(t > 0)) return; const act = E.sum(D.R[i].otm.slice(1)) / 12; if (act > 0 && Math.abs(act - t) > 1) { x.kc *= t / act; ch = true; } });
+    if (!ch) break;
+    D = E.distribuir(P, ases, ases.map(x => x.diasEf), dias, pl.criterio || c.criterio);
+  }
   ases.forEach((x, i) => {
     x.R = D.R[i]; x.base = D.base[i]; x.alertas = E.validarAsesor(D.R[i], x.categ, dias.map((d, m) => d ? x.diasEf[m] / d : 0)); x.asc = E.ascenso(D.R[i], x.categ);
     const de = E.sum(x.diasEf); x.cpdPlan = de ? E.sum(x.R.otn.slice(1)) / de : 0; x.metaNorm = Math.round(E.sum(x.diasEf.map(d => d * x.cpd)));
@@ -1407,9 +1573,35 @@ function decisionCard() {
 const parseDec = v => { let s = String(v == null ? '' : v).trim().replace(/\s|%/g, ''); if (s === '') return null; if (/^-?\d{1,3}(\.\d{3})+(,\d+)?$/.test(s) || s.includes(',')) s = s.replace(/\./g, '').replace(',', '.'); const n = Number(s); return isFinite(n) ? n : NaN; };
 const decTxt = (v, d) => (v == null || !isFinite(v)) ? '' : Number(v).toLocaleString('es-EC', {minimumFractionDigits: 0, maximumFractionDigits: d, useGrouping: false});
 function puedePres() { return !S.readonly && (S.me.admin || S.me.rol === 'PRES' || S.me.rol === 'GER'); }
+/* Datos raros del plan mensual: se marcan en rojo y el motivo aparece al pasar el mouse. */
+function anomalias(k, M) {
+  const P = M.P, F = M.F.s, out = {}, add = (key, m, t) => { (out[key] = out[key] || {})[m] = t; };
+  const hist = promCategorias().hist[k] || 0;
+  for (let m = 1; m <= 12; m++) {
+    [['pc1', 'CER > 1'], ['pc15', 'CER > 15'], ['pc30', 'CER > 30']].forEach(([key, n]) => { if (P[key][m] > P[key][m - 1] + 0.0005) add(key, m, `${n} sube de ${fmtP(P[key][m - 1])} a ${fmtP(P[key][m])} frente al mes anterior.`); });
+    if (P.pc1[m] > E.NORMA.cer1 + 1e-9) add('pc1', m, `CER > 1 de ${fmtP(P.pc1[m])}: sobre el máximo de 6 % (Tabla 1.1).`);
+    if (P.pc30[m] > E.NORMA.cer30 + 1e-9) add('pc30', m, `CER > 30 de ${fmtP(P.pc30[m])}: sobre el máximo de 4 % (Tabla 1.1).`);
+    const mes = MESL[m - 1].toLowerCase();
+    if (F.otn[m] > 0 && P.otn[m] > F.otn[m] * 1.5) add('otn', m, `Se piden ${fmtN(P.otn[m])} créditos; en ${mes} 2026 se otorgaron ${fmtN(F.otn[m])} (${sgnTxt(P.otn[m] / F.otn[m] - 1)}).`);
+    if (F.otn[m] > 0 && P.otn[m] < F.otn[m] * 0.6) add('otn', m, `Solo ${fmtN(P.otn[m])} créditos; en ${mes} 2026 se otorgaron ${fmtN(F.otn[m])} (${sgnTxt(P.otn[m] / F.otn[m] - 1)}).`);
+    if (F.otm[m] > 0 && P.otm[m] > F.otm[m] * 1.6) add('otm', m, `Colocación de USD ${fmtN(P.otm[m])}; en ${mes} 2026 fue USD ${fmtN(F.otm[m])} (${sgnTxt(P.otm[m] / F.otm[m] - 1)}).`);
+    if (hist > 0 && P.prom[m] > hist * 1.3) add('prom', m, `Monto promedio ${sgnTxt(P.prom[m] / hist - 1)} sobre el promedio 2026 de la agencia (USD ${fmtN(hist)}).`);
+    if (P.saldo[m - 1] > 0 && P.saldo[m] / P.saldo[m - 1] - 1 > 0.05) add('saldo', m, `El saldo crece ${sgnTxt(P.saldo[m] / P.saldo[m - 1] - 1)} en un solo mes.`);
+    if (P.saldo[m - 1] > 0 && P.saldo[m] / P.saldo[m - 1] - 1 < -0.05) add('saldo', m, `El saldo cae ${sgnTxt(P.saldo[m] / P.saldo[m - 1] - 1)} en un solo mes.`);
+  }
+  return out;
+}
+function motivoCer(lbl, fin, logra) {
+  return logra < fin ? `Pediste ${decTxt(fin, 2)} %, pero cierra en ${decTxt(logra, 2)} % porque el porcentaje no puede subir en ningún mes de ningún asesor.`
+    : `Pediste ${decTxt(fin, 2)} %, pero la mora no puede subir frente a dic-2026 (${decTxt(logra, 2)} %).`;
+}
+const sgnTxt = v => (v >= 0 ? '+' : '') + fmtN(v * 100, 1) + ' %';
 function filaComp(l, a25, a26, a27, d, M) {
   const f = v => v == null ? '' : M ? fmtM(v) : fmtN(v, d || 0);
-  return `<tr><td>${l}</td><td>${f(a25)}</td><td>${f(a26)}</td><td><b>${f(a27)}</b></td><td>${a26 != null ? f(a27 - a26) : ''}</td><td>${sgn(dpct(a27, a26))}</td></tr>`;
+  const dv = dpct(a27, a26), raro = dv != null && (dv > 0.25 || dv < -0.10);
+  const g25 = a25 != null && a26 != null && a25 ? a26 / a25 - 1 : null;
+  const tip = raro ? `Variación de ${sgnTxt(dv)} frente a 2026${g25 != null ? `; de 2025 a 2026 fue ${sgnTxt(g25)}` : ''}.` : '';
+  return `<tr><td>${l}</td><td>${f(a25)}</td><td>${f(a26)}</td><td><b>${f(a27)}</b></td><td>${a26 != null ? f(a27 - a26) : ''}</td><td class="${raro ? 'anom' : ''}" ${raro ? `title="${esc(tip)}"` : ''}>${sgn(dv)}</td></tr>`;
 }
 function filaCer(l, a25, a26, a27, tope) {
   const r = x => x && x[1] > 0 ? x[0] / x[1] : null, v25 = r(a25), v26 = r(a26), v27 = r(a27);
@@ -1427,6 +1619,8 @@ function tablaComparativa(y25, F, P, nA, diasAses, hayP) {
     ${filaComp('Operaciones vigentes a diciembre (N.º)', y25 ? y25.vgn[12] : null, F.vgn[12], P.vgn[12])}
     ${filaComp('Colocación anual (USD millones)', o25, o26, o27, 0, true)}
     ${filaComp('Créditos otorgados (N.º)', n25, n26, n27)}
+    ${filaComp('Colocación promedio por asesor al mes (USD)', null, o26 != null ? o26 / nA / 12 : null, o27 / nA / 12)}
+    ${filaComp('Créditos promedio por asesor al mes (N.º)', null, n26 != null ? n26 / nA / 12 : null, n27 / nA / 12, 1)}
     ${filaComp('Monto promedio de crédito (USD)', n25 ? o25 / n25 : null, n26 ? o26 / n26 : null, n27 ? o27 / n27 : 0)}
     ${filaComp('Recuperación anual (USD millones)', rec(y25), rec(F), E.sum(P.recup.slice(1)), 0, true)}
     ${filaCer('CER > 1 a diciembre', y25 ? [y25.c1[12], y25.saldo[12]] : null, [F.c1[12], F.saldo[12]], [P.c1[12], P.saldo[12]], E.NORMA.cer1)}
@@ -1439,38 +1633,58 @@ function tablaComparativa(y25, F, P, nA, diasAses, hayP) {
 }
 function panelAgencia(k) {
   const a = S.ag[k], M = modelo(k); if (!M) return '';
-  const pres = presDe(k), ed = puedePres() && !pres.ok, PC = promCategorias();
-  const y25 = E.serie(a.hist, '2025'), F = M.F.s, P = M.P, nA = M.ases.length || 1, hayP = M.F.last < 12;
+  const pres = presDe(k), ed = puedePres() && !pres.ok, pl = S.planes[k] || {};
   const vis = visibles();
   const regs = [...new Set(vis.map(v => v[1].reg))], zonas = [...new Set(vis.filter(v => v[1].reg === a.reg).map(v => v[1].zona))], ags = vis.filter(v => v[1].zona === a.zona);
   const idx = vis.findIndex(v => v[0] === k);
-  const cats = Object.keys(DEF_META.kc).filter(c => M.ases.some(x => x.categ === c));
-  const hist = PC.hist[k] || 0, n26 = E.sum(F.otn.slice(1)), o26 = E.sum(F.otm.slice(1));
-  const y25p = y25 && E.sum(y25.otn.slice(1)) ? E.sum(y25.otm.slice(1)) / E.sum(y25.otn.slice(1)) : null;
-  const modo = modoProm(k), pa = PC.ase[k] || [];
-  const filasCat = cats.map((c, i) => {
-    const xs = M.ases.filter(x => x.categ === c), fij = +(pres.prom || {})[c] > 0, v = PC.ag[k][c];
-    return `<tr><td>${c}</td><td>${xs.length}</td><td>${fmtN(PC.sug[k][c])}</td>
-      <td class="lever-col"><input id="pp_${i}" class="lev-md${fij ? ' ov' : ''}" type="text" inputmode="numeric" data-pres="prom" data-pcat="${c}" value="${v}" ${ed ? '' : 'disabled'}>${fij && ed ? ` <button class="btn lnk" data-presreset="${c}">sugerido</button>` : ''}</td>
-      <td>${sgn(hist ? v / hist - 1 : null)}</td><td>${fmtN(E.NORMA.cat[c].m || 0) || '—'}</td></tr>`;
-  }).join('');
-  const fijAg = +pres.promAg > 0, vAg = fijAg ? +pres.promAg : PC.sugAg[k];
-  const tablaAg = `<div class="scroll"><table><thead><tr><th>Agencia</th><th>Asesores</th><th>Sugerido (USD)</th><th class="lever-col">Fijado por Presidencia (USD)</th><th>vs promedio histórico</th></tr></thead><tbody>
-    <tr><td>${esc(a.nombre)}</td><td>${M.ases.length}</td><td>${fmtN(PC.sugAg[k])}</td><td class="lever-col"><input id="pp_ag" class="lev-md${fijAg ? ' ov' : ''}" type="text" inputmode="numeric" data-pres="promAg" value="${vAg}" ${ed ? '' : 'disabled'}>${fijAg && ed ? ' <button class="btn lnk" data-presresetag="1">sugerido</button>' : ''}</td><td>${sgn(hist ? vAg / hist - 1 : null)}</td></tr></tbody></table></div>`;
-  const tablaCat = `<div class="scroll"><table><thead><tr><th>Categoría</th><th>Asesores</th><th>Sugerido (USD)</th><th class="lever-col">Fijado por Presidencia (USD)</th><th>vs promedio histórico</th><th>Mínimo colocación mes Tabla 1.1 (USD)</th></tr></thead><tbody>${filasCat}</tbody></table></div>`;
-  const tablaAse = `<div class="scroll"><table><thead><tr><th class="l">Asesor</th><th class="l">Categoría</th><th>Sugerido por categoría (USD)</th><th class="lever-col">Fijado por Presidencia (USD)</th><th>vs promedio histórico</th><th>Mínimo colocación mes Tabla 1.1 (USD)</th></tr></thead><tbody>
-    ${M.ases.map((x, i) => { const fj = +((pres.promAse || {})[x.id]) > 0, v = pa[i] || 0;
-      return `<tr><td class="l">${esc(x.n)}</td><td class="l">${esc(x.categ)}</td><td>${fmtN(PC.ag[k][x.categ])}</td><td class="lever-col"><input id="pa_${i}" class="lev-md${fj ? ' ov' : ''}" type="text" inputmode="numeric" data-pres="promAse" data-pase="${esc(x.id)}" value="${v}" ${ed ? '' : 'disabled'}>${fj && ed ? ` <button class="btn lnk" data-presresetase="${esc(x.id)}">sugerido</button>` : ''}</td><td>${sgn(hist ? v / hist - 1 : null)}</td><td>${fmtN((E.NORMA.cat[x.categ] || {}).m || 0) || '—'}</td></tr>`; }).join('')}</tbody></table></div>`;
-  const selModo = `<div class="seg modoprom">${[['agencia', 'Toda la agencia'], ['categoria', 'Por categoría'], ['asesor', 'Por asesor']].map(([v, l]) => `<button class="btn ${modo === v ? 'pri' : ''}" data-modoprom="${v}" ${ed ? '' : 'disabled'}>${l}</button>`).join('')}</div>`;
-  const tablaProm = modo === 'agencia' ? tablaAg : modo === 'asesor' ? tablaAse : tablaCat;
-  const notaProm = modo === 'agencia' ? `Un solo monto para todos los asesores. Sugerido = promedio 2026 de la agencia redondeado a múltiplos de ${fmtN(PC.paso)}.`
-    : modo === 'asesor' ? 'Cada asesor parte del monto de su categoría; Presidencia puede fijar un monto distinto a cualquiera.'
-    : `Sugerido = promedio 2026 × coeficiente de la categoría, redondeado a múltiplos de ${fmtN(PC.paso)}.`;
+  const niv = ['ag', 'zona', 'reg', 'faces'].includes(S.pnivel) ? S.pnivel : 'ag';
+  const kNiv = niv === 'ag' ? [k] : niv === 'zona' ? vis.filter(v => v[1].zona === a.zona).map(v => v[0]) : niv === 'reg' ? vis.filter(v => v[1].reg === a.reg).map(v => v[0]) : vis.map(v => v[0]);
+  const titNiv = niv === 'ag' ? a.nombre : niv === 'zona' ? a.zona : niv === 'reg' ? 'Región ' + a.reg : (vis.length === Object.keys(S.ag).length ? 'FACES total' : 'Total de tu alcance');
+  const selNiv = `<div class="seg modoprom">${[['ag', 'Agencia'], ['zona', 'Zona'], ['reg', 'Región'], ['faces', 'FACES total']].map(([v, l]) => `<button class="btn ${niv === v ? 'pri' : ''}" data-pnivel="${v}">${l}</button>`).join('')}</div>`;
+  let tabla, P, nA, hayP;
+  if (niv === 'ag') {
+    P = M.P; nA = M.ases.length; hayP = M.F.last < 12;
+    tabla = tablaAnexo(P, histCol(E.serie(a.hist, '2025'), false), histCol(M.F.s, hayP), nA, {k, ed, pl, w: wAg(k), flags: anomalias(k, M), lockProm: !!colAseAg(k)});
+  } else {
+    const T = sumaModelos(kNiv); P = T.P; nA = T.nAses; hayP = kNiv.some(x => (modelo(x) || {F: {last: 12}}).F.last < 12);
+    tabla = tablaAnexo(P, T.y25 ? histCol(T.y25, false) : null, histCol(T.F, hayP), nA, {agg: true});
+  }
   const av = M.avisos.filter(x => x.n !== 'info'), info = M.avisos.filter(x => x.n === 'info');
   const ok = pres.ok;
-  return `<section class="card meta" id="panelAg">
-    <div class="metahead"><div><div class="eyebrow">Parámetros de Presidencia Ejecutiva por agencia</div><h2>${esc(a.nombre)}</h2></div>
-      <div class="bar"><span class="pill ${ok ? 'ok' : ''}">${ok ? 'Parámetros aprobados' : 'Pendiente de aprobación'}</span></div></div>
+  const promTodo = Array.isArray(pl.promMes) && pl.promMes.length === 12 && pl.promMes.every(v => v != null && v !== '' && +v === +pl.promMes[0]) ? +pl.promMes[0] : '';
+  const promAuto = E.sum(M.P.otn.slice(1)) ? E.sum(M.P.otm.slice(1)) / E.sum(M.P.otn.slice(1)) : 0;
+  const lockP = !!colAseAg(k), otnSug = (() => { const A = asesoresAg(k), fx = factEsc(k, escActual()); return E.sum(E.creditosMes(cpdAg(k), A.D, A.Dnom, wAg(k), 0).map((v, m) => Math.round(v * fx.coloc[m]))); })(), otnPlan = E.sum(M.P.otn.slice(1)), hayEd = !!(pl.otnTot || (pl.otnMes || []).some(v => v != null && v !== '') || (pl.promMes || []).some(v => v != null && v !== '') || (pl.pesoMes || []).some(v => v != null && v !== '') || lockP || Object.keys(pl.cerFin || {}).length);
+  const barraProm = niv === 'ag' ? `<div class="editbox">
+      <div class="eb-h"><b>Parámetros editables</b><span class="muted small">Las casillas y filas resaltadas se pueden cambiar; si las borras vuelven al valor sugerido.</span>${ed && hayEd ? '<button class="btn" data-resetall="' + k + '">Restablecer valores</button>' : ''}</div>
+      <div class="eb-g">
+        <div><label for="otnall">Número de créditos en el año</label><input id="otnall" class="lev-md selall${+pl.otnTot > 0 ? ' ov' : ''}" type="text" inputmode="numeric" data-otntot="1" data-agk="${k}" value="${+pl.otnTot > 0 ? +pl.otnTot : ''}" placeholder="${fmtN(otnSug)}" ${ed ? '' : 'disabled'}>
+          <div class="muted small">Sugerido: ${fmtN(otnSug)} créditos (2026: ${fmtN(E.sum(M.F.s.otn.slice(1)))}). Se reparte en los meses con el peso estacional.</div></div>
+        <div><label for="promall">Monto promedio de crédito en el año (USD)</label><input id="promall" class="lev-md selall${promTodo ? ' ov' : ''}" type="text" inputmode="numeric" data-promall="1" data-agk="${k}" value="${promTodo}" placeholder="${fmtN(promAuto)}" ${ed && !lockP ? '' : 'disabled'}>
+          <div class="muted small">${lockP ? 'Definido por la colocación de cada asesor (Detalle de asesores).' : `Sugerido: USD ${fmtN(promAuto)} según la categoría de los asesores (2026: USD ${fmtN(promCategorias().hist[k] || 0)}).`}</div></div>
+        <div><label>Mora a diciembre 2027 (%)</label><div class="cerbox">${[['pc1', 'CER > 1'], ['pc15', 'CER > 15'], ['pc30', 'CER > 30']].map(([key, lb]) => { const f = (pl.cerFin || {})[key], fj = f != null && f !== ''; return `<span><span class="muted small">${lb}</span><input id="cf_${key}" class="lev-sm selall${fj ? ' ov' : ''}" type="text" inputmode="decimal" data-cerfin="${key}" data-agk="${k}" value="${fj ? decTxt(+f, 2) : ''}" placeholder="${decTxt(M.P[key][12] * 100, 2)}" ${ed ? '' : 'disabled'}></span>`; }).join('')}</div>
+          ${[['pc1', 'CER > 1'], ['pc15', 'CER > 15'], ['pc30', 'CER > 30']].map(([key, lb]) => { const f = (pl.cerFin || {})[key]; if (f == null || f === '') return ''; const lg = M.P[key][12] * 100; return Math.abs(lg - +f) > 0.005 ? `<div class="small neg">${lb}: ${esc(motivoCer(lb, +f, lg))}</div>` : ''; }).join('')}
+          <div class="muted small">Dic-2026: CER > 1 ${fmtP(M.F.s.saldo[12] ? M.F.s.c1[12] / M.F.s.saldo[12] : 0)} · CER > 30 ${fmtP(M.F.s.saldo[12] ? M.F.s.c30[12] / M.F.s.saldo[12] : 0)}. La baja se reparte en los meses según el histórico de la mora; ningún mes sube.</div></div>
+      </div></div>` : '';
+  const pc = promCategorias().ase[k] || [], colA = pl.colAse || {};
+  const filasAse = niv === 'ag' ? M.ases.map((x, i) => {
+    const R = x.R, cr = E.sum(R.otn.slice(1)), co = E.sum(R.otm.slice(1)), pm = co / 12, mn = (E.NORMA.cat[x.categ] || {}).m || 0, fj = +colA[x.id] > 0;
+    const bajoM = mn ? R.otm.slice(1).filter(v => v < mn).length : 0;
+    const est = mn && pm < mn ? `<span class="neg" title="Promedio mensual de USD ${fmtN(pm)} frente al mínimo de USD ${fmtN(mn)} de su categoría (Tabla 1.1).">Bajo el mínimo</span>` : mn && bajoM ? `<span title="${bajoM} meses quedan bajo USD ${fmtN(mn)}, por vacaciones o estacionalidad.">Cumple en promedio</span>` : mn ? '<span class="pos">Cumple</span>' : '—';
+    return `<tr class="${mn && pm < mn ? 'alerta' : ''}"><td class="l">${esc(x.n)}</td><td class="l">${esc(x.categ)}</td><td>${mn ? fmtN(mn) : '—'}</td>
+      <td class="lever-col"><input id="ca_${i}" class="lev-md selall${fj ? ' ov' : ''}" type="text" inputmode="numeric" data-colase="${esc(x.id)}" data-agk="${k}" value="${Math.round(fj ? +colA[x.id] : pm)}" ${ed ? '' : 'disabled'}></td>
+      <td>${fmtN(cr ? co / cr : 0)}</td><td>${fmtN(Math.round(cr / 12))}</td><td>${fmtN(cr)}</td><td>${fmtN(co)}</td><td class="l">${est}</td></tr>`;
+  }).join('') : '';
+  const detAse = niv === 'ag' ? `<details class="desp" ${S.openAse ? 'open' : ''} data-desp="ase"><summary>DETALLE DE ASESORES <span class="muted small">${M.ases.length} asesores · colocación mensual por asesor</span></summary>
+    <div class="scroll"><table><thead><tr><th class="l">Asesor</th><th class="l">Categoría</th><th>Mínimo mensual de su categoría (USD)</th><th class="lever-col">Colocación mensual promedio (USD)</th><th>Monto por crédito (USD)</th><th>N.º mensual colocado promedio</th><th>Créditos 2027</th><th>Colocación 2027 (USD)</th><th class="l">Estado</th></tr></thead><tbody>${filasAse}
+      <tr class="tot"><td class="l">Total agencia</td><td></td><td></td><td>${fmtN(E.sum(M.P.otm.slice(1)) / 12)}</td><td>${fmtN(otnPlan ? E.sum(M.P.otm.slice(1)) / otnPlan : 0)}</td><td>${fmtN(Math.round(otnPlan / 12))}</td><td>${fmtN(otnPlan)}</td><td>${fmtN(E.sum(M.P.otm.slice(1)))}</td><td></td></tr></tbody></table></div>
+    <div class="note small" style="margin-top:6px">${lockP ? 'Hay asesores con colocación fijada: el monto de la agencia es la suma de sus asesores y ya no se fija por agencia. Borra las casillas o usa Restablecer valores para volver a fijarlo por agencia.' : 'Si fijas la colocación mensual de un asesor, la colocación de la agencia pasa a ser la suma de sus asesores y el monto deja de fijarse por agencia.'} Mínimo mensual: POL Plan de Carrera, Tabla 1.1.</div></details>` : '';
+  const detInd = niv === 'ag' ? `<details class="desp" ${S.openInd ? 'open' : ''} data-desp="ind"><summary>PRINCIPALES INDICADORES DE LA AGENCIA <span class="muted small">2025 real · 2026 · 2027 plan y variaciones</span></summary>
+    ${tablaComparativa(E.serie(a.hist, '2025'), M.F.s, M.P, M.ases.length || 1, E.sum(M.D), M.F.last < 12)}
+    <div class="note small" style="margin-top:6px">En rojo, variaciones de más de +25 % o menos de −10 % frente a 2026; pasa el mouse para ver el detalle.</div></details>` : '';
+  const flash = S.flashAg && Date.now() - S.flashAg < 1500;
+  return `<section class="card meta${flash ? ' flash' : ''}" id="panelAg">
+    <div class="metahead"><div><div class="eyebrow">Parámetros de Presidencia Ejecutiva</div><h2>${esc(titNiv)}</h2></div>
+      <div class="bar"><span class="pill ${ok ? 'ok' : ''}">${a.nombre}: ${ok ? 'parámetros aprobados' : 'pendiente de aprobación'}</span></div></div>
     <div class="toolbar">
       <label for="pf_reg" class="muted">Región</label><select id="pf_reg" data-pfil="reg">${regs.map(r => `<option ${r === a.reg ? 'selected' : ''}>${esc(r)}</option>`).join('')}</select>
       <label for="pf_zona" class="muted">Zona</label><select id="pf_zona" data-pfil="zona">${zonas.map(z => `<option ${z === a.zona ? 'selected' : ''}>${esc(z)}</option>`).join('')}</select>
@@ -1478,34 +1692,14 @@ function panelAgencia(k) {
       <span style="flex:1"></span>
       <button class="btn" data-pnav="-1" ${idx <= 0 ? 'disabled' : ''}>Anterior</button><button class="btn" data-pnav="1" ${idx >= vis.length - 1 ? 'disabled' : ''}>Siguiente</button>
     </div>
-    <div class="note small">Jefe de Agencia: ${esc(a.jefe || '—')} · ${M.ases.length} asesores · ${E.sum(M.D)} días-asesor laborables en 2027 (feriados nacionales y locales y vacaciones descontados) · saldo dic-2026 ${fmtN(F.saldo[12])} USD (${hayP ? 'pronóstico' : 'real'}) · recuperación mensual promedio ${fmtN(M.p.recRate * 100, 2)} %.</div>
-    <div class="levers" style="margin-top:12px">
-      <div class="lever info"><div class="ll">Créditos por día laborable por asesor</div>
-        <div class="big">${fmtN(cpdAg(k), 2)}</div>
-        <div class="small muted">Lo calcula el escenario ${esc(escParams(escActual()).nombre)} con el crecimiento de ${fmtN((+meta().g) * 100, 1)} % de la pestaña Mercado. 2026: ${fmtN(cpdHist(k), 2)} por día · norma: 1,00.</div></div>
-      <div class="lever res"><div class="ll">Resultado 2027</div>
-        <div class="big">${fmtM(P.saldo[12])} <span>USD millones de saldo</span></div>
-        <div class="small">Cartera ${sgn(dpct(P.saldo[12], F.saldo[12]))} · colocación ${fmtM(E.sum(P.otm.slice(1)))} millones ${sgn(dpct(E.sum(P.otm.slice(1)), o26))} · ${fmtN(E.sum(P.otn.slice(1)))} créditos</div></div>
-    </div>
-    <h3 style="margin-top:14px">Monto promedio de crédito</h3><div class="instr">Escoge bajo qué criterio quieres establecer el monto promedio de crédito de la agencia: ${selModo}</div>
-    ${tablaProm}
-    <div class="note small" style="margin-top:6px">Promedio histórico de la agencia: USD ${fmtN(hist)} en 2026${y25p ? `, USD ${fmtN(y25p)} en 2025` : ''}. ${notaProm}</div>
-    <h3>Avisos</h3>
+    <div class="instr"><span>Ver la tabla de:</span>${selNiv}<span class="muted small">${niv === 'ag' ? (ed ? 'Puedes editar los créditos otorgados, el monto promedio y el peso de cada mes.' : 'Solo lectura.') : `Suma de ${kNiv.length} agencias · solo lectura; para editar elige Agencia.`}</span></div>
+    ${niv === 'ag' ? `<div class="note small">Jefe de Agencia: ${esc(a.jefe || '—')} · ${M.ases.length} asesores · ${E.sum(M.D)} días-asesor laborables en 2027 (feriados y vacaciones descontados) · saldo dic-2026 ${fmtN(M.F.s.saldo[12])} USD (${M.F.last < 12 ? 'pronóstico' : 'real'}).</div>` : ''}
+    ${barraProm}${detAse}${detInd}
+    <h3>Anexo 5 · ${esc(titNiv)} 2027</h3>${tabla}
+    ${niv === 'ag' ? `<h3>Avisos de ${esc(a.nombre)}</h3>
     ${av.length ? `<ul class="val">${av.map(x => `<li class="${x.n === 'alto' ? 'flag' : ''}">${esc(x.t)}</li>`).join('')}</ul>` : '<p class="pos">Sin avisos: el plan está dentro de lo que la agencia ha logrado y de la normativa.</p>'}
     ${info.length ? `<details style="margin-top:6px"><summary class="small muted">Indicadores de riesgo frente a la normativa (${info.length})</summary><ul class="val small muted">${info.map(x => `<li>${esc(x.t)}</li>`).join('')}</ul></details>` : ''}
-    <h3>Principales resultados de la agencia</h3>${tablaComparativa(y25, F, P, nA, E.sum(M.D), hayP)}
-    <div class="scroll" style="margin-top:10px"><table><thead><tr><th>Plan mensual 2027</th>${MES.map(m => `<th>${m}<span class="mk L"></span>PLAN</th>`).join('')}<th>Total</th></tr></thead><tbody>
-      <tr><td>Días-asesor laborables</td>${M.D.map(v => `<td>${fmtN(v)}</td>`).join('')}<td>${fmtN(E.sum(M.D))}</td></tr>
-      <tr><td>Créditos otorgados</td>${P.otn.slice(1).map(v => `<td>${fmtN(v)}</td>`).join('')}<td><b>${fmtN(E.sum(P.otn.slice(1)))}</b></td></tr>
-      <tr><td>Colocación (USD)</td>${P.otm.slice(1).map(v => `<td>${fmtN(v)}</td>`).join('')}<td><b>${fmtN(E.sum(P.otm.slice(1)))}</b></td></tr>
-      <tr><td>Recuperación (USD)</td>${P.recup.slice(1).map(v => `<td>${fmtN(v)}</td>`).join('')}<td><b>${fmtN(E.sum(P.recup.slice(1)))}</b></td></tr>
-      <tr><td>Saldo de cartera (USD)</td>${P.saldo.slice(1).map(v => `<td>${fmtN(v)}</td>`).join('')}<td><b>${fmtN(P.saldo[12])}</b></td></tr>
-      <tr><td>CER > 1 (%)</td>${P.saldo.slice(1).map((v, i) => { const x = v > 0 ? P.c1[i + 1] / v : null; return `<td class="${x > E.NORMA.cer1 + 1e-9 ? 'neg' : ''}">${fmtP(x)}</td>`; }).join('')}<td><b>${fmtP(P.saldo[12] ? P.c1[12] / P.saldo[12] : null)}</b></td></tr>
-      <tr><td>CER > 30 (%)</td>${P.saldo.slice(1).map((v, i) => { const x = v > 0 ? P.c30[i + 1] / v : null; return `<td class="${x > E.NORMA.cer30 + 1e-9 ? 'neg' : ''}">${fmtP(x)}</td>`; }).join('')}<td><b>${fmtP(P.saldo[12] ? P.c30[12] / P.saldo[12] : null)}</b></td></tr>
-      <tr class="sd"><td>CER > 90 (%)</td>${MES.map(() => '<td>s/d</td>').join('')}<td>s/d</td></tr>
-    </tbody></table></div>
-    <div class="note small" style="margin-top:6px">Recuperación = cuotas + precancelaciones (incluidas las de renovación) con la tasa real de la agencia y su estacionalidad. CER en rojo: sobre el máximo de la Tabla 1.1 (CER > 1: 6 %, CER > 30: 4 %). Los créditos del año son créditos por día × días-asesor laborables; se reparten en los meses con la estacionalidad histórica de la agencia, ajustada por vacaciones y feriados de cada mes.</div>
-    ${puedePres() ? `<div class="bar" style="margin-top:12px"><button class="btn pri" data-presok="${ok ? 0 : 1}">${ok ? 'Reabrir parámetros' : 'Aprobar parámetros de la agencia'}</button>${idx < vis.length - 1 ? '<button class="btn" data-pnav="1">Siguiente agencia</button>' : ''}</div>` : ''}
+    ${puedePres() ? `<div class="bar" style="margin-top:12px"><button class="btn pri" data-presok="${ok ? 0 : 1}">${ok ? 'Reabrir parámetros' : 'Aprobar parámetros de la agencia'}</button>${idx < vis.length - 1 ? '<button class="btn" data-pnav="1">Siguiente agencia</button>' : ''}</div>` : ''}` : ''}
   </section>`;
 }
 function tarjetaFaces(keys, todo) {
@@ -1542,9 +1736,9 @@ function vistaResumen() {
     if (a.reg !== grpR) { grpR = a.reg; rows += `<tr class="grp"><td colspan="11">Región ${esc(a.reg)}</td></tr>`; }
     const F = M.F.s, P = M.P, alto = M.avisos.filter(x => x.n === 'alto').length, med = M.avisos.filter(x => x.n === 'medio').length;
     const n27 = E.sum(P.otn.slice(1)), o27 = E.sum(P.otm.slice(1));
-    rows += `<tr class="click ${k === S.presSel ? 'sub' : ''}" data-psel="${k}"><td>${esc(a.nombre)}</td><td class="l small">${esc(a.zona)}</td><td>${M.ases.length}</td><td>${fmtN(cpdAg(k), 2)}</td><td>${fmtN(n27 ? o27 / n27 : 0)}</td><td>${fmtN(F.saldo[12])}</td><td>${fmtN(P.saldo[12])}</td><td>${sgn(dpct(P.saldo[12], F.saldo[12]))}</td><td>${sgn(dpct(o27, E.sum(F.otm.slice(1))))}</td><td>${alto ? `<span class="flag">${alto}</span>` : ''}${med ? ` <span class="muted">+${med}</span>` : ''}${!alto && !med ? '0' : ''}</td><td class="l">${presDe(k).ok ? '<span class="pill ok">Aprobado</span>' : '<span class="pill">Pendiente</span>'}</td></tr>`;
+    rows += `<tr class="click ${k === S.presSel ? 'selag' : ''}" data-psel="${k}" title="Clic para revisar ${esc(a.nombre)} arriba"><td>${esc(a.nombre)}</td><td class="l small">${esc(a.zona)}</td><td>${M.ases.length}</td><td>${fmtN(cpdAg(k), 2)}</td><td>${fmtN(n27 ? o27 / n27 : 0)}</td><td>${fmtN(F.saldo[12])}</td><td>${fmtN(P.saldo[12])}</td><td>${sgn(dpct(P.saldo[12], F.saldo[12]))}</td><td>${sgn(dpct(o27, E.sum(F.otm.slice(1))))}</td><td>${alto ? `<span class="flag">${alto}</span>` : ''}${med ? ` <span class="muted">+${med}</span>` : ''}${!alto && !med ? '0' : ''}</td><td class="l">${presDe(k).ok ? '<span class="pill ok">Aprobado</span>' : '<span class="pill">Pendiente</span>'}</td></tr>`;
   });
-  const tabla = `<section class="card"><div class="hd"><h2>Agencias</h2><span class="muted small">Toca una agencia para revisarla arriba · USD · N.º</span></div>
+  const tabla = `<section class="card"><div class="hd"><h2>Agencias</h2><span class="muted small">Haz clic en una agencia para revisarla arriba · la agencia elegida queda marcada en rojo · USD · N.º</span></div>
     <div class="scroll"><table><thead><tr><th>Agencia</th><th class="l">Zona</th><th>Asesores</th><th>Créd./día</th><th>Monto prom. 2027</th><th>Saldo dic-26</th><th>Saldo dic-27<span class="mk L"></span>PLAN</th><th>Δ % cartera</th><th>Δ % colocación</th><th>Avisos</th><th class="l">Presidencia</th></tr></thead><tbody>${rows}</tbody></table></div></section>`;
   const T = sumaModelos(keys), hayP = keys.some(k => (modelo(k) || {F: {last: 12}}).F.last < 12);
   const anexo = `<section class="card"><div class="hd"><h2>${todo ? 'Anexo 5 consolidado FACES 2027' : 'Anexo 5 consolidado de tu alcance'}</h2><span class="muted small">USD · N.º · %</span><span class="sp"></span>${S.dl ? `<button class="btn" data-dl="faces">Descargar consolidado (xlsx)</button>` : ''}</div>
@@ -1610,7 +1804,7 @@ function vistaAgencia() {
   const tipo = `<section class="card"><div class="hd"><h2>Colocación por tipo de cartera 2027</h2><span class="muted small">USD</span></div>${tablaTipos(M.P)}</section>`;
   const val = `<section class="card"><h2>Validación normativa</h2>${M.val.length ? `<ul class="val">${M.val.map(v => `<li><span class="flag">${esc(v.k)}:</span> ${esc(v.txt)} <span class="muted small">${esc(v.ref)}</span></li>`).join('')}</ul>` : '<p class="pos">Cumple los límites de CER, demandados y castigos.</p>'}
     <div class="note small" style="margin-top:8px">Límites: CER > 1 ≤ 6 %, CER > 30 ≤ 4 % (POL Plan de Carrera, Tablas 1.1 y 2); demandados ≤ 0,05 % de la cartera por trimestre; castigos ≤ 0,06 % de la cartera por año. Entrega al Comité de Negocios hasta el 30 de noviembre; aprobación hasta el 15 de diciembre; carga al CORE hasta el 6 de enero (MPOL v4.2, 6.2.6).</div></section>`;
-  return head + coloc + fer + anexo + `<div class="split two">${tipo}${val}</div>` + pron + supuestos;
+  return head + coloc + fer + anexo + tipo + val + pron + supuestos;
 }
 const FILAS_BASE = ['vgn', 'saldo', 'c1', 'c15', 'c30', 'moran', 'pc1', 'pc15', 'pc30'];
 function tablaAnexo(P, h25, h26, nAses, opt) {
@@ -1619,11 +1813,38 @@ function tablaAnexo(P, h25, h26, nAses, opt) {
   const body = ROWS.map(([k, l, t, mode]) => {
     const tot = totalRow(P, k, mode);
     const pa = nAses && t !== '%' && !['mmin','mmax','prom'].includes(k) ? tot / nAses : (nAses ? tot : null);
-    const cls = FILAS_BASE.includes(k) ? 'base' : k === 'prom' ? 'palanca' : '';
-    return `<tr class="${cls}"><td>${esc(l)}</td><td>${fv(t, h25 && h25[k])}</td><td class="c26">${fv(t, h26 && h26[k])}</td>${P[k].slice(1).map(v => `<td>${fv(t, v)}</td>`).join('')}<td><b>${fv(t, tot)}</b></td>${nAses ? `<td>${fv(t, pa)}</td>` : ''}</tr>`;
+    const cls = FILAS_BASE.includes(k) ? 'base' : (k === 'prom' || (k === 'otn' && opt && opt.k)) ? 'palanca' : k === 'recup' ? 'franja' : '';
+    const E2 = opt && opt.k && (k === 'otn' || k === 'prom') ? opt : null;
+    if (E2) {
+      const man = i => Array.isArray(E2.pl[k === 'otn' ? 'otnMes' : 'promMes']) && E2.pl[k === 'otn' ? 'otnMes' : 'promMes'][i] != null && E2.pl[k === 'otn' ? 'otnMes' : 'promMes'][i] !== '';
+      const fl2 = (E2.flags && E2.flags[k]) || {}, lock = k === 'prom' && E2.lockProm;
+      const cel = (v, i) => `<td class="${fl2[i + 1] ? 'anom' : ''}" ${fl2[i + 1] ? `title="${esc(fl2[i + 1])}"` : ''}><input id="ax_${k}_${i}" class="cel selall${man(i) ? ' ov' : ''}" type="text" inputmode="numeric" data-${k === 'otn' ? 'otnmes' : 'promm'}="${i}" data-agk="${E2.k}" value="${Math.round(v)}" ${E2.ed && !lock ? '' : 'disabled'}></td>`;
+      const totC = k === 'otn' ? `<td><input id="ax_otntot" class="cel selall tot${+E2.pl.otnTot > 0 ? ' ov' : ''}" type="text" inputmode="numeric" data-otntot="1" data-agk="${E2.k}" value="${tot}" ${E2.ed ? '' : 'disabled'}></td>` : `<td><b>${fv(t, tot)}</b></td>`;
+      return `<tr class="${cls} editrow"><td>${esc(l)}${(MES.some((_, i) => man(i)) || (k === 'otn' && +E2.pl.otnTot > 0)) && E2.ed ? ` <button class="btn lnk" data-${k === 'otn' ? 'otnreset' : 'promreset'}="1" data-agk="${E2.k}">sugerido</button>` : ''}</td><td>${fv(t, h25 && h25[k])}</td><td class="c26">${fv(t, h26 && h26[k])}</td>${P[k].slice(1).map(cel).join('')}${totC}${nAses ? `<td>${fv(t, pa)}</td>` : ''}</tr>`;
+    }
+    const fl = (opt && opt.flags && opt.flags[k]) || {};
+    if (opt && opt.k && CER_KEYS[k]) {
+      const fin = (opt.pl.cerFin || {})[k], fij = fin != null && fin !== '';
+      const logra = P[k][12] * 100, dif = fij && Math.abs(logra - +fin) > 0.005;
+      const totI = `<td class="cerfin${dif ? ' anom' : ''}" ${dif ? `title="${esc(motivoCer(l.trim(), +fin, logra))}"` : ''}><input id="ax_fin_${k}" class="cel selall tot${fij ? ' ov' : ''}" type="text" inputmode="decimal" data-cerfin="${k}" data-agk="${opt.k}" value="${decTxt(fij ? +fin : logra, 2)}" ${opt.ed ? '' : 'disabled'} title="Escribe el ${esc(l.trim())} con el que quieres cerrar dic-2027"><span class="muted"> %</span>${dif ? `<div class="small">logra ${decTxt(logra, 2)} %</div>` : ''}</td>`;
+      return `<tr class="${cls} editrow cerrow"><td>${esc(l)}${fij && opt.ed ? ` <button class="btn lnk" data-cerreset="${k}" data-agk="${opt.k}">sugerido</button>` : ''}</td><td>${fv(t, h25 && h25[k])}</td><td class="c26">${fv(t, h26 && h26[k])}</td>${P[k].slice(1).map((v, i) => fl[i + 1] ? `<td class="anom" title="${esc(fl[i + 1])}">${fv(t, v)}</td>` : `<td>${fv(t, v)}</td>`).join('')}${totI}${nAses ? `<td>${fv(t, pa)}</td>` : ''}</tr>`;
+    }
+    return `<tr class="${cls}"><td>${esc(l)}</td><td>${fv(t, h25 && h25[k])}</td><td class="c26">${fv(t, h26 && h26[k])}</td>${P[k].slice(1).map((v, i) => fl[i + 1] ? `<td class="anom" title="${esc(fl[i + 1])}">${fv(t, v)}</td>` : `<td>${fv(t, v)}</td>`).join('')}<td><b>${fv(t, tot)}</b></td>${nAses ? `<td>${fv(t, pa)}</td>` : ''}</tr>`;
   }).join('');
-  return `<div class="scroll"><table><thead>${head}</thead><tbody>${body}</tbody></table></div>
-    <div class="legend" style="margin-top:6px"><span><i class="bs"></i>Punto de partida: cierre dic-2026 (se reemplaza con el dato real al cargar diciembre)</span><span><i class="b"></i>Saldo, operaciones vigentes y CER</span><span><i class="lv"></i>Monto promedio (decisión)</span></div>`;
+  let extra = '';
+  if (opt && (opt.k || opt.agg)) {
+    const nc = 3 + (nAses ? 1 : 0);
+    const wv = opt.k ? opt.w.map(x => x * 100) : P.otn.slice(1).map(v => { const t = E.sum(P.otn.slice(1)); return t ? v / t * 100 : 0; });
+    const pwM = opt.k && Array.isArray(opt.pl.pesoMes) && opt.pl.pesoMes.some(v => v != null && v !== '');
+    const tr = MES.map((_, i) => P.saldo[i] > 0 ? P.recup[i + 1] / P.saldo[i] : 0);
+    extra = `<tr class="grp"><td colspan="${MES.length + nc}">Supuestos del cálculo</td></tr>
+      <tr class="palanca editrow"><td>Peso estacional de la colocación (%)${pwM && opt.ed ? ` <button class="btn lnk" data-pesoreset="1" data-agk="${opt.k}">histórico</button>` : ''}<div class="muted small">reparte los créditos del año entre los meses</div></td><td></td><td class="c26"></td>
+        ${wv.map((v, i) => opt.k ? `<td><input id="ax_w_${i}" class="cel selall${pwM && opt.pl.pesoMes[i] != null && opt.pl.pesoMes[i] !== '' ? ' ov' : ''}" type="text" inputmode="decimal" data-pesomes="${i}" data-agk="${opt.k}" value="${decTxt(v, 2)}" ${opt.ed ? '' : 'disabled'}></td>` : `<td>${fmtN(v, 2)} %</td>`).join('')}<td><b>100 %</b></td>${nAses ? '<td></td>' : ''}</tr>
+      <tr><td>% de recuperación<div class="muted small">monto recuperado ÷ saldo del mes anterior</div></td><td></td><td class="c26"></td>${tr.map(v => `<td>${fmtN(v * 100, 2)} %</td>`).join('')}<td><b>${fmtN(E.sum(P.recup.slice(1)) / (E.sum(P.saldo.slice(0, 12)) || 1) * 100, 2)} %</b></td>${nAses ? '<td></td>' : ''}</tr>`;
+  }
+  return `<div class="scroll"><table><thead>${head}</thead><tbody>${body}${extra}</tbody></table></div>
+    ${opt && opt.k ? '<div class="note small" style="margin-top:6px">En rojo: datos que conviene revisar (pasa el mouse para ver por qué). Mora: escribe en Total anual el CER con el que quieres cerrar dic-2027; la baja se reparte en los meses según cómo se comporta la mora de la agencia y de FACES en cada mes. El porcentaje nunca sube; el monto en USD puede subir solo si la cartera crece más. Créditos otorgados: escribe sobre el sugerido; si borras la casilla vuelve el sugerido. En Total anual puedes poner los créditos del año y se reparten con el peso estacional de cada mes. El peso estacional se normaliza para que sume 100 %. % de recuperación: tasa real 2026 de la agencia con la estacionalidad 2025.</div>' : ''}
+    <div class="legend" style="margin-top:6px"><span><i class="bs"></i>Punto de partida: cierre dic-2026 (se reemplaza con el dato real al cargar diciembre)</span><span><i class="b"></i>Saldo, operaciones vigentes y CER</span><span><i class="lv"></i>Monto promedio (decisión)</span><span><i style="background:#e6efe9;border-color:#4E7C64"></i>Monto recuperado</span></div>`;
 }
 const inicioCol = (R, flagP) => ({saldo: R.saldo[0], vgn: R.vgn[0], c1: R.c1[0], c15: R.c15[0], c30: R.c30[0], moran: R.moran[0], pc1: R.pc1[0], pc15: R.pc15[0], pc30: R.pc30[0], _p: flagP});
 function tablaTipos(P) {
@@ -1665,13 +1886,13 @@ function vistaAsesores() {
       <td>${de}</td><td><b>${fmtN(n)}</b></td><td class="${n / Math.max(1, de) < x.cpd - 0.005 ? 'neg' : 'pos'}">${fmtN(n / Math.max(1, de), 2)}</td><td>${fmtN(x.metaNorm)}</td>
       <td>${fmtN(n ? m / n : 0)}</td><td><b>${fmtN(m)}</b></td><td>${fmtN(r.saldo[12])}</td><td>${fmtN(r.vgn[12])}</td>
       <td class="l wrap">${textoAscenso(x)}</td>
-      <td class="l">${x.alertas.length ? `<span class="flag small">${esc(x.alertas.join(' · '))}</span>` : '<span class="pos small">Cumple mínimos</span>'}</td>
+      <td class="l wrap">${x.alertas.length ? `<span class="flag small">${esc(x.alertas.join(' · '))}</span>` : '<span class="pos small">Cumple mínimos</span>'}</td>
       <td>${S.dl ? `<button class="btn lnk" data-dlase="${esc(x.id)}">xlsx</button>` : ''}</td></tr>`;
   }).join('');
   const sN = E.sum(M.P.otn.slice(1)), sM = E.sum(M.P.otm.slice(1)), sD = E.sum(M.ases.map(x => E.sum(x.diasEf)));
   const tot = `<tr class="tot"><td>Total agencia</td><td></td><td>${fmtN(E.sum(M.ases.map(x => x.saldo)))}</td><td>${fmtN(E.sum(M.ases.map(x => x.vig)))}</td><td>100</td><td>${sD}</td><td>${fmtN(sN)}</td><td>${fmtN(sD ? sN / sD : 0, 2)}</td><td>${fmtN(E.sum(M.ases.map(x => x.metaNorm)))}</td><td>${fmtN(sN ? sM / sN : 0)}</td><td>${fmtN(sM)}</td><td>${fmtN(M.P.saldo[12])}</td><td>${fmtN(M.P.vgn[12])}</td><td></td><td></td><td></td></tr>`;
   const tabla = `<section class="card"><div class="hd"><h2>Asesores de crédito</h2><span class="muted small">Categoría inicial según saldo de cartera (POL Plan de Carrera, Tabla 1) · USD · N.º</span></div>
-    <div class="scroll"><table><thead><tr><th>Asesor</th><th class="l">Categoría</th><th>Saldo al corte</th><th>Vigentes al corte</th><th>Peso %</th><th>Días laborables efectivos</th><th>Meta créditos 2027<span class="mk L"></span>PLAN</th><th>Créditos por día</th><th>Lo que pide su categoría</th><th>Monto prom. 2027</th><th>Meta colocación 2027<span class="mk L"></span>PLAN</th><th>Saldo dic-27</th><th>Vigentes dic-27</th><th class="l">Ascenso de categoría</th><th class="l">Mínimos Tabla 1.1</th><th></th></tr></thead><tbody>${rows}${tot}</tbody></table></div>
+    <div class="scroll"><table class="tasesores"><thead><tr><th>Asesor</th><th class="l">Categoría</th><th>Saldo al corte</th><th>Vigentes al corte</th><th>Peso %</th><th>Días laborables efectivos</th><th>Meta créditos 2027<span class="mk L"></span>PLAN</th><th>Créditos por día</th><th>Lo que pide su categoría</th><th>Monto prom. 2027</th><th>Meta colocación 2027<span class="mk L"></span>PLAN</th><th>Saldo dic-27</th><th>Vigentes dic-27</th><th class="l">Ascenso de categoría</th><th class="l">Mínimos Tabla 1.1</th><th></th></tr></thead><tbody>${rows}${tot}</tbody></table></div>
     <div class="note small" style="margin-top:6px">"Lo que pide su categoría" = días laborables efectivos × créditos por día laborable de la categoría (meta de Presidencia). Ascenso: primer mes en que el saldo y las operaciones vigentes proyectados cumplen la categoría inmediata superior por tres meses consecutivos (Tabla 1 y numeral 6.2.3 del Plan de Carrera); el cambio lo aprueba el Comité de Negocios y exige al menos 12 meses en la categoría actual.</div></section>`;
   const mm = S.matMode;
   const mat = `<section class="card"><div class="hd"><h2>Metas mensuales 2027</h2><span class="sp"></span><div class="bar">
@@ -1954,7 +2175,7 @@ function vistaMetodo() {
   return `<section class="card prose"><h2>Cómo se calcula</h2>
   <h3>Fuentes</h3><ul><li>Cumplimiento Mensual Ejecutado 2025 y 2026 por agencia (saldo, colocación, recuperación, castigos, vigentes, originales, CER, demandados).</li><li>Consolidado Tipo de Cartera por asesor (saldo, vigentes, colocado del mes por tipo de cartera).</li><li>Normativa: MPOL Otorgamiento de Microcréditos v4.2 (6.2.6 y Anexo 5) y POL Plan de Carrera de Asesores de Crédito v1.0 (Tablas 1, 1.1 y 2).</li></ul>
   <h3>Pronóstico 2026</h3><p>Para cada mes sin dato real: colocación = promedio mensual 2026 de la agencia × factor estacional del mismo mes en 2025 (mitad agencia, mitad FACES). En el mes del corte de Tipo de Cartera se suma lo colocado a la fecha más el ritmo histórico de los días hábiles restantes. La recuperación (cuotas + precancelaciones, incluidas las de renovación) es una tasa sobre el saldo del mes anterior, con su estacionalidad 2025. El saldo cumple siempre: saldo anterior + colocación − cuotas − precancelaciones − castigos. Se excluyen de las tasas los meses de apertura o traspaso de cartera.</p>
-  <h3>Premisas</h3><ul><li>Recuperación (amortización): tasa real 2026 de cada agencia sobre el saldo del mes anterior, con la estacionalidad de 2025.</li><li>Colocación: mínimo un crédito por día laborable por asesor. Créditos del año = créditos por día × días-asesor laborables (sin feriados nacionales y locales ni vacaciones).</li><li>Estacionalidad: los créditos del año se reparten en los meses según la estacionalidad histórica de la agencia, ajustada por los días disponibles de cada mes.</li><li>Monto promedio: por categoría de asesor, fijado por Presidencia para cada agencia. El sugerido es el promedio 2026 de la agencia × coeficiente de la categoría, redondeado.</li></ul>
+  <h3>Premisas</h3><ul><li>Recuperación (amortización): tasa real 2026 de cada agencia sobre el saldo del mes anterior, con la estacionalidad de 2025.</li><li>Colocación: mínimo un crédito por día laborable por asesor. Créditos del año = créditos por día × días-asesor laborables (sin feriados nacionales y locales ni vacaciones).</li><li>Estacionalidad: los créditos del año se reparten en los meses según la estacionalidad histórica de la agencia, ajustada por los días disponibles de cada mes.</li><li>Monto promedio: por categoría de asesor, fijado por Presidencia para cada agencia. El sugerido es el promedio 2026 de la agencia × coeficiente de la categoría, redondeado.</li><li>Créditos cancelados: se calculan con la cuadratura del Cumplimiento Mensual Ejecutado (vigentes del mes anterior + otorgados − castigados − vigentes al cierre). Para 2027: tasa de cierre 2026 de la agencia sobre los vigentes del mes anterior × estacionalidad mensual (2025 y meses reales 2026, mitad agencia y mitad FACES).</li><li>Créditos castigados: filas «f) No. Créditos Castigados» y «f) Monto Cartera Castigada» del Cumplimiento Mensual Ejecutado. Para 2027: tasa 2026 de la agencia (número sobre vigentes, monto sobre saldo) del mes anterior, ajustada por el escenario.</li></ul>
 <h3>Revisión de Presidencia</h3><p>Presidencia revisa agencia por agencia (región, zona, agencia), ajusta créditos por día y montos por categoría y ve los avisos: crecimientos que la agencia nunca registró, crecimientos de 100 % o más, montos muy por encima de su histórico y montos que no permiten cumplir el mínimo de colocación de la Tabla 1.1. Al aprobar los parámetros de la agencia, las jefaturas regionales, zonales y de agencia distribuyen a los asesores.</p>
 <h3>Plan 2027 por agencia</h3><p>Colocación = créditos × monto. Saldo = saldo anterior + colocación − recuperación − castigos. El resto del Anexo 5 se calcula igual que en el formato institucional.</p>
 <h3>Distribución a asesores</h3><p>Premisa: un crédito por día laborable. Cada categoría tiene sus créditos por día laborable (Presidencia los fija junto con la meta) y un monto promedio relativo. Cada mes la meta de la agencia se reparte por créditos por día de la categoría × días laborables efectivos del asesor (días hábiles menos feriados nacionales y locales y vacaciones). Los créditos se reparten por resto mayor y los montos al centavo, de modo que la suma de asesores es exactamente la meta de la agencia. La categoría inicial sale del saldo de cartera (Tabla 1) y se puede cambiar; el ascenso se estima con el saldo y las operaciones vigentes proyectados por tres meses consecutivos (numeral 6.2.3).</p>
@@ -2073,7 +2294,7 @@ async function descargar(tipo, id) {
 
 /* ---------------- eventos ---------------- */
 document.addEventListener('click', async ev => {
-  const t = ev.target.closest('button,[data-go],[data-tab]'); if (!t) return;
+  const t = ev.target.closest('button,[data-go],[data-tab],tr[data-psel]'); if (!t) return;
   const d = t.dataset;
   if (S.fb && (d.login || d.olvide || d.logout || d.cambiaclave || d.crearusr || d.ureset !== undefined)) { accionFB(d); return; }
   if (d.tab) { S.view = d.tab; remember(); render(); window.scrollTo(0, 0); return; }
@@ -2088,7 +2309,7 @@ document.addEventListener('click', async ev => {
   if (d.mver) { S.mver = Object.assign({}, S.mver || {}); S.mver[d.mver] = S.mver[d.mver] === 't' ? 'g' : 't'; render(); return; }
   if (d.optbase) { guardarMeta(m => { m.optBase = d.optbase; }); if (escActual() === 'opt') { const sg = sugEsc('opt'); guardarMeta(m => { m.g = Math.round(sg.g * 1000) / 1000; m.mora30 = Math.round(sg.mora * 10000) / 10000; }); toast('Se cargó la sugerencia del optimista con la nueva base.'); } return; }
   if (d.escsug) { const sg = sugEsc(escActual()); guardarMeta(m => { if (d.escsug === 'g') m.g = Math.round(sg.g * 1000) / 1000; else m.mora30 = Math.round(sg.mora * 10000) / 10000; }); return; }
-  if (d.psel) { S.presSel = d.psel; render(); setTimeout(() => { const el = $('#panelAg'); if (el) el.scrollIntoView({block: 'start'}); }, 60); return; }
+  if (d.psel) { S.presSel = d.psel; S.flashAg = Date.now(); render(); setTimeout(() => { const el = $('#panelAg'); if (el) { const hdr = document.querySelector('header'); const off = hdr ? hdr.getBoundingClientRect().height + 8 : 90; window.scrollTo({top: el.getBoundingClientRect().top + window.scrollY - off, behavior: 'smooth'}); } }, 60); return; }
   if (d.pnav) { const vis = visibles().map(v => v[0]); const i = vis.indexOf(S.presSel) + +d.pnav; if (vis[i]) { S.presSel = vis[i]; render(); setTimeout(() => { const el = $('#panelAg'); if (el) el.scrollIntoView({block: 'start'}); }, 60); } return; }
   if (d.mseg) {
     const f = Object.assign({reg: '', zona: '', segs: []}, S.mfil || {}), all = (S.mercado && S.mercado.segs) || [];
@@ -2107,8 +2328,12 @@ document.addEventListener('click', async ev => {
   if (d.presok) { const v = d.presok === '1'; guardarPlan(S.presSel, p => { p.pres = Object.assign({}, p.pres || {}, {ok: v, f: new Date().toISOString(), uid: S.me.id}); }, true); toast(v ? 'Parámetros aprobados.' : 'Parámetros reabiertos.'); return; }
   if (d.pcatreset) { guardarMeta(m => { m.promCat = Object.assign({}, m.promCat || {}); delete m.promCat[d.pcatreset]; }); return; }
   if (d.metanorm) { const g = +d.metanorm; if (isFinite(g)) guardarMeta(m => { m.g = Math.round(g * 10000) / 10000; }); return; }
-  if (d.otnreset) { guardarPlan(k, p => { p.otnMes = null; }); return; }
-  if (d.promreset) { guardarPlan(k, p => { p.promMes = null; }); return; }
+  if (d.otnreset) { guardarPlan(d.agk || k, p => { p.otnMes = null; delete p.otnTot; }); return; }
+  if (d.promreset) { guardarPlan(d.agk || k, p => { p.promMes = null; }); return; }
+  if (d.resetall) { guardarPlan(d.resetall, p => { p.otnMes = null; p.promMes = null; p.pesoMes = null; delete p.otnTot; delete p.colAse; delete p.cerFin; }); toast('Se restablecieron los valores sugeridos.'); return; }
+  if (d.cerreset) { guardarPlan(d.agk || k, p => { const c = Object.assign({}, p.cerFin || {}); delete c[d.cerreset]; p.cerFin = c; }); return; }
+  if (d.pesoreset) { guardarPlan(d.agk || k, p => { p.pesoMes = null; }); return; }
+  if (d.pnivel) { S.pnivel = d.pnivel; render(); return; }
   if (d.estado) {
     const nota = ($('#notaEstado') || {}).value || '';
     const e = estadoIdx(k), ne = d.estado === 'adv' ? e + 1 : 0;
@@ -2146,10 +2371,31 @@ document.addEventListener('change', async ev => {
 });
 document.addEventListener('keydown', ev => { if (ev.key === 'Enter' && S.fb && ev.target && ['lg_mail', 'lg_pass', 'cl_2'].includes(ev.target.id)) { ev.preventDefault(); accionFB(ev.target.id === 'cl_2' ? {cambiaclave: '1'} : {login: '1'}); } });
 document.addEventListener('change', ev => {
-  const t = ev.target, d = t.dataset, k = S.sel;
+  const t = ev.target, d = t.dataset, k = d.agk || S.sel;
   if (d.uadm) { const u = Object.assign({}, S.usuarios[d.uadm], {admin: t.checked}); S.db.collection('usuarios').doc(d.uadm).set(u).catch(() => toast('No se pudo guardar.')); return; }
   if (d.param) { const v = t.value === '' ? null : +t.value / +d.sc; if (t.value !== '' && !isFinite(v)) return; guardarPlan(k, p => { p.ov = p.ov || {}; if (v === null) delete p.ov[d.param]; else p.ov[d.param] = v; }); return; }
   if (d.mix) { const v = t.value === '' ? null : +t.value / 100; guardarPlan(k, p => { p.mix = p.mix || {}; if (v === null) delete p.mix[d.mix]; else p.mix[d.mix] = v; }); return; }
+  if (d.otntot) {
+    const n = parseDec(t.value); if (n !== null && (isNaN(n) || n < 0)) { toast('Escribe un número sin letras.'); render(); return; }
+    guardarPlan(k, p => { p.otnMes = null; if (n === null) delete p.otnTot; else p.otnTot = Math.round(n); }); return;
+  }
+  if (d.cerfin) {
+    const n = parseDec(t.value); if (n !== null && (isNaN(n) || n < 0 || n > 60)) { toast('Escribe la mora objetivo en %, por ejemplo 5,5.'); render(); return; }
+    guardarPlan(k, p => { const c = Object.assign({}, p.cerFin || {}); if (n === null) delete c[d.cerfin]; else c[d.cerfin] = Math.round(n * 100) / 100; p.cerFin = c; }); return;
+  }
+  if (d.colase) {
+    const n = parseDec(t.value); if (n !== null && (isNaN(n) || n < 0)) { toast('Escribe un monto en dólares.'); render(); return; }
+    guardarPlan(k, p => { const c = Object.assign({}, p.colAse || {}); if (n === null || n === 0) delete c[d.colase]; else c[d.colase] = Math.round(n); p.colAse = c; }); return;
+  }
+  if (d.promall) {
+    const n = parseDec(t.value); if (n !== null && (isNaN(n) || n <= 0)) { toast('Escribe un monto en dólares, por ejemplo 3500.'); render(); return; }
+    guardarPlan(k, p => { p.promMes = n === null ? null : Array(12).fill(Math.round(n)); }); return;
+  }
+  if (d.pesomes !== undefined) {
+    const i = +d.pesomes, n = parseDec(t.value); if (n !== null && (isNaN(n) || n < 0)) { toast('Escribe un porcentaje, por ejemplo 8,5.'); render(); return; }
+    const cur = wAg(k).map(x => Math.round(x * 10000) / 100);
+    guardarPlan(k, p => { const arr = Array.isArray(p.pesoMes) && p.pesoMes.length === 12 ? p.pesoMes.slice() : cur.slice(); arr[i] = n === null ? cur[i] : n; p.pesoMes = arr; }); return;
+  }
   if (d.otnmes !== undefined || d.promm !== undefined) {
     const f = d.otnmes !== undefined ? 'otnMes' : 'promMes', i = +(d.otnmes !== undefined ? d.otnmes : d.promm);
     const n = parseDec(t.value); if (n !== null && isNaN(n)) { toast('Escribe un número sin letras.'); render(); return; }
@@ -2187,6 +2433,10 @@ document.addEventListener('change', ev => {
   if (d.peso) { const v = parseDec(t.value); if (v !== null && isNaN(v)) return; guardarPlan(k, p => { p.ases = p.ases || {}; const o = p.ases[d.peso] = p.ases[d.peso] || {}; if (v === null) delete o.peso; else o.peso = Math.max(0, v); }); return; }
   if (d.cfg && t.tagName === 'INPUT') { const v = +t.value / +(d.sc || 1); if (!isFinite(v)) return; guardarCfg(c => c[d.cfg] = v); return; }
 });
+document.addEventListener('focusin', ev => { const t = ev.target; if (t && t.classList && t.classList.contains('selall')) { try { t.select(); } catch (e) {} t.dataset.sel = '1'; } });
+document.addEventListener('mouseup', ev => { const t = ev.target; if (t && t.dataset && t.dataset.sel === '1') { ev.preventDefault(); delete t.dataset.sel; } });
+document.addEventListener('keydown', ev => { const t = ev.target; if (t && t.dataset && t.dataset.sel === '1') delete t.dataset.sel; }, true);
+document.addEventListener('toggle', ev => { const t = ev.target; if (t && t.dataset && t.dataset.desp) { if (t.dataset.desp === 'ase') S.openAse = t.open; else S.openInd = t.open; } }, true);
 document.addEventListener('dragover', ev => { const z = ev.target.closest && ev.target.closest('#drop'); if (z) { ev.preventDefault(); z.classList.add('on'); } });
 document.addEventListener('dragleave', ev => { const z = ev.target.closest && ev.target.closest('#drop'); if (z) z.classList.remove('on'); });
 document.addEventListener('drop', async ev => { const z = ev.target.closest && ev.target.closest('#drop'); if (!z) return; ev.preventDefault(); z.classList.remove('on'); await procesarArchivos([...ev.dataTransfer.files], (Object.values(S.ag)[0] || {tc: {}}).tc.corte); render(); });
