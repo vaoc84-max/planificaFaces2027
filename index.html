@@ -166,6 +166,9 @@ input.lev-md{width:96px;text-align:right;border:2px solid var(--brand);font:700 
 .mchip{font:500 12px var(--font-body,inherit);border:1px solid var(--line);background:var(--surface);color:var(--ink-2);border-radius:999px;padding:4px 10px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
 .mchip i{width:9px;height:9px;border-radius:2px}.mchip.g{font-weight:700}.mchip.on{background:var(--ink);color:var(--surface);border-color:var(--ink)}
 input.cel{width:100%;min-width:50px;box-sizing:border-box;text-align:right;font:inherit;padding:3px 5px;border:1px solid var(--line);border-radius:5px;background:var(--surface);color:var(--ink)}input.cel.tot{min-width:62px;font-weight:600}input.cel.ov{border-color:var(--brand);background:#fff5f4}
+.recbox{border:1px solid var(--line);border-radius:6px;padding:8px 12px;margin:0 0 12px;background:#fff}.rb-h{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;font-size:11.5px;margin-bottom:6px}
+.sem{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--ink-2)}.sem i{width:9px;height:9px;border-radius:50%;display:inline-block;background:#B0B0B0}.sem.verde i{background:#78A58D}.sem.amar i{background:#CCB89D}.sem.rojo i{background:#E4271D}
+.rb-t{font-size:11.5px}.rb-t ul{margin:4px 0 0;padding-left:18px}.rb-t li{margin:2px 0}.rb-t li.rojo::marker{color:#E4271D}.rb-t li.verde::marker{color:#78A58D}.rb-t li.amar::marker{color:#B0906E}
 details.editbox>summary{cursor:pointer;list-style:none}details.editbox>summary::-webkit-details-marker{display:none}details.editbox>summary::before{content:'▸';font-size:12px}details.editbox[open]>summary::before{content:'▾'}details.editbox.ok{border-color:var(--line);background:transparent}details.editbox:not([open]){padding:8px 14px}details.editbox:not([open])>summary{margin-bottom:0}.pill.rev{background:#E4271D;color:#fff;border-color:#E4271D}ul.eb-rev{margin:0 0 10px;padding-left:18px}
 .editbox{border:2px solid var(--brand);background:#fff7f6;border-radius:10px;padding:12px 14px;margin:12px 0}.editbox .eb-h{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:8px}.editbox .eb-h .btn{margin-left:auto}
 .editbox .eb-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}.editbox label{display:block;font:600 12px var(--font-head);letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px}.editbox input{width:160px}
@@ -568,6 +571,8 @@ const ENGINE = (() => {
       }
       return promBase;
     });
+    /* Escala del monto (planificación por cartera y clientes): multiplica el monto automático, no el escrito a mano */
+    if (+p.promScale > 0 && +p.promScale !== 1) for (let i = 0; i < 12; i++) if (!man(promMes, i)) prom[i] = prom[i] * p.promScale;
     const sR = Array.isArray(sRec) && sRec.length === 12 ? sRec : Array(12).fill(1);
     const P = {}; const K = ['tasaRec','promo','ases','comi','solic','planif','otn','orn','sun','canc','vgn','otm','orm','sum','saldo','c1','c15','c30','moran','pc1','pc15','pc30','mmin','mmax','prom','demn','dem','castn','cast','recup','recdem','reccast'];
     K.forEach(k => P[k] = Array(13).fill(0));
@@ -1112,7 +1117,7 @@ function compensacion(e) {
 /* Distribución técnica (por defecto con la hoja v2): FACES llega a la cartera total de Presidencia con la recuperación y la
    cancelación reales; cada agencia aporta según lo que ha demostrado colocar en 2026, escalado por su equipo 2027. */
 const hayInd27 = () => Object.values((meta().crit || {}).ag || {}).some(x => x && x.ind27);
-const distModo = () => { const C = meta().crit || {}, d = C.distModo; if (C.distModoManual && ['hoja', 'tecnica', 'agencia'].includes(d)) return d; return hayInd27() ? 'hoja' : d === 'hoja' || d === 'tecnica' ? d : 'agencia'; };
+const distModo = () => { const C = meta().crit || {}, d = C.distModo; if (C.distModoManual === 2 && ['cc', 'hoja', 'tecnica', 'agencia'].includes(d)) return d; return hayInd27() ? 'cc' : d === 'hoja' || d === 'tecnica' ? d : 'agencia'; };
 function capTecnica(k) {
   const C = meta().crit || {}, x = (C.ag || {})[k] || {}, cr = critAg(k), q = prep(k);
   const o = q.F.s.otn.slice(1), act = o.filter(v => v > 0).length, n26 = E.sum(o), n26a = act > 0 && act < 12 ? n26 * 12 / act : n26;
@@ -1130,6 +1135,89 @@ function closeMediana() {
   const C = cacheSol(); if (C.closeMed != null) return C.closeMed;
   const v = keysPlan().filter(k => prep(k).F.s.otn.slice(1).every(x => x > 0)).map(k => prep(k).def.closeRate).filter(x => x > 0).sort((a, b) => a - b);
   return (C.closeMed = v.length ? (v.length % 2 ? v[(v.length - 1) / 2] : (v[v.length / 2 - 1] + v[v.length / 2]) / 2) : 0);
+}
+/* ---- Cumplibilidad (planificación por cartera y clientes): productividad, monto y mora frente a la historia ---- */
+const BANDA_MONTO = 0.20;
+function cumpleAg(k, M) {
+  M = M || modelo(k); if (!M || !M.P.cc) return null;
+  const C = cacheSol(), id = 'cum_' + k; if (C[id]) return C[id];
+  const cr = critAg(k), x = ((meta().crit || {}).ag || {})[k] || {}, F = M.F.s, cc = M.P.cc;
+  const o26 = F.otn.slice(1), act = o26.filter(v => v > 0).length, n26 = E.sum(o26), n26a = act > 0 && act < 12 ? n26 * 12 / act : n26;
+  const m26 = n26 ? E.sum(F.otm.slice(1)) / n26 : 0, a27 = cr.nAses || 0, a26 = ((S.ag[k] || {}).asesores || []).length;
+  const n = E.sum(M.P.otn.slice(1)), nH = +cr.otn || 0, g = n26a ? n / n26a - 1 : 0;
+  const prod = {n, n26, n26a, g, nH, cpm: a27 ? n / a27 / 12 : 0, cpm26: a26 ? n26a / a26 / 12 : 0, tar: a27 ? nH / a27 / 12 : 0};
+  prod.st = n > nH * 1.10 || g > 0.40 ? 'rojo' : n > nH || g > 0.25 || g < -0.15 ? 'amar' : 'verde';
+  const d = m26 ? cc.monto / m26 - 1 : 0, monto = {m: cc.monto, m26, d, pres: cc.montoPres};
+  monto.st = Math.abs(d) <= BANDA_MONTO ? 'verde' : Math.abs(d) <= 0.35 ? 'amar' : 'rojo';
+  const p0 = F.saldo[12] > 0 ? F.c30[12] / F.saldo[12] : 0, tgt = x.ind27 && x.ind27.cer30 != null ? x.ind27.cer30 : null, red = tgt != null && p0 > 0 ? Math.max(0, 1 - tgt / p0) : 0;
+  const mora = {p0, tgt, red, p1: M.P.saldo[12] > 0 ? M.P.c30[12] / M.P.saldo[12] : 0};
+  mora.st = red <= 0.30 ? 'verde' : red <= 0.60 ? 'amar' : 'rojo';
+  const sts = [prod.st, monto.st, mora.st];
+  return (C[id] = {prod, monto, mora, peor: sts.includes('rojo') ? 'rojo' : sts.includes('amar') ? 'amar' : 'verde'});
+}
+/* Recomendaciones: cuánta cartera y cuántos clientes conviene mover entre agencias para que todas queden dentro de lo
+   cumplible (monto ±20 % de su 2026; créditos hasta la tarifa de Presidencia +10 % y no más de +40 % sobre 2026),
+   primero dentro de la misma región. El total FACES no cambia. Son sugerencias: no se aplican solas. */
+function recomendaciones() {
+  const C = cacheSol(); if (C.recom) return C.recom;
+  const e = escActual(), ks = keysPlan().filter(k => { const M = modelo(k); return M && M.P.cc; });
+  const info = {};
+  ks.forEach(k => {
+    const M = modelo(k), cc = M.P.cc, cu = cumpleAg(k, M), objS = M.P.metaSaldo, vObj = M.P.vigObj, reg = S.ag[k].reg;
+    const r = {k, reg, cedS: 0, recS: 0, roomS: 0, cedV: 0, recV: 0, roomV: 0};
+    if (!cc.man && !cc.pmMan && cc.base > 0 && cu.monto.m26 > 0) {
+      const fLo = cu.monto.m26 * (1 - BANDA_MONTO) / cc.base, fHi = cu.monto.m26 * (1 + BANDA_MONTO) / cc.base;
+      if (cc.f > fHi) r.cedS = Math.max(0, objS - planAg(k, 1, e, 1, {nf: [cc.n, fHi]}).saldo[12]);
+      else if (cc.f < fLo) r.recS = Math.max(0, planAg(k, 1, e, 1, {nf: [cc.n, fLo]}).saldo[12] - objS);
+      else r.roomS = Math.max(0, planAg(k, 1, e, 1, {nf: [cc.n, fHi]}).saldo[12] - objS);
+    }
+    const p = cu.prod, nCap = Math.max(p.n26a, Math.min(p.nH * 1.10, p.n26a * 1.40)), nOk = Math.max(p.n26a, Math.min(p.nH, p.n26a * 1.25));
+    if (!cc.man) {
+      if (p.n > nCap) r.cedV = Math.max(0, vObj - planAg(k, 1, e, 1, {nf: [Math.floor(nCap), cc.f]}).vgn[12]);
+      else if (p.n < nOk) r.roomV = Math.max(0, planAg(k, 1, e, 1, {nf: [Math.floor(nOk), cc.f]}).vgn[12] - vObj);
+    }
+    info[k] = r;
+  });
+  /* reparto: primero receptores obligados (monto bajo la banda), luego los que tienen holgura; primero en la región */
+  const mover = (ced, rec, room) => {
+    const out = {}; ks.forEach(k => out[k] = {d: 0, de: {}, a: {}});
+    let pend = 0;
+    const dar = (donante, cant, receptores, campo) => {
+      /* se llena primero al receptor con más holgura, para que cada donante reparta entre pocas agencias */
+      let resto = cant;
+      receptores.slice().sort((a, b) => info[b][campo] - info[a][campo]).forEach(k => { if (resto <= 0) return; const v = Math.min(resto, info[k][campo]); if (v <= 0) return;
+        info[k][campo] -= v; resto -= v; out[k].d += v; out[k].de[donante] = (out[k].de[donante] || 0) + v; out[donante].a[k] = (out[donante].a[k] || 0) + v; });
+      return resto;
+    };
+    ks.filter(k => info[k][ced] > 0).sort((a, b) => info[b][ced] - info[a][ced]).forEach(k => {
+      let resto = info[k][ced]; const reg = info[k].reg;
+      for (const campo of [rec, room]) {
+        if (!campo) continue;
+        resto = dar(k, resto, ks.filter(j => j !== k && info[j].reg === reg && info[j][campo] > 0), campo);
+        resto = dar(k, resto, ks.filter(j => j !== k && info[j].reg !== reg && info[j][campo] > 0), campo);
+      }
+      out[k].d -= info[k][ced] - resto; out[k].sin = resto; pend += resto;
+    });
+    return {out, pend};
+  };
+  const cS = mover('cedS', 'recS', 'roomS'), cV = mover('cedV', 'recV', 'roomV');
+  const res = {S: cS.out, V: cV.out, pendS: cS.pend, pendV: cV.pend, info};
+  return (C.recom = res);
+}
+function textoRecom(k) {
+  const R = recomendaciones(), s = R.S[k], v = R.V[k], i = R.info[k], cu = cumpleAg(k), out = [];
+  if (!s || !cu) return out;
+  const nom = j => esc((S.ag[j] || {}).nombre || j), lista = o => Object.entries(o).filter(([, x]) => x >= 1).sort((a, b) => b[1] - a[1]).map(([j, x]) => `${nom(j)} ${fmtN(x)}`).join(', ');
+  const M = modelo(k);
+  if (s.d < -1) out.push({n: 'rojo', t: `Bajar la cartera dic-2027 en USD ${fmtN(-s.d)} (a USD ${fmtN(M.P.metaSaldo + s.d)}): con su recuperación real necesita un monto de USD ${fmtN(cu.monto.m)}, ${sgnTxt(cu.monto.d)} sobre 2026. Pasa a: ${lista(s.a)}.${s.sin >= 1 ? ` USD ${fmtN(s.sin)} no tienen agencia con holgura: decisión de Presidencia.` : ''}`});
+  else if (s.sin >= 1) out.push({n: 'rojo', t: `Con su recuperación real necesita un monto de USD ${fmtN(cu.monto.m)} (${sgnTxt(cu.monto.d)} sobre 2026). Para quedar en ±20 % habría que bajar su cartera en USD ${fmtN(s.sin)}, pero ninguna agencia tiene holgura para recibirla: decisión de Presidencia.`});
+  if (s.d > 1) out.push({n: 'verde', t: `Puede recibir USD ${fmtN(s.d)} de cartera (de ${lista(s.de)}) y su monto seguiría dentro de ±20 % de 2026.`});
+  if (v.d < -0.5) out.push({n: 'rojo', t: `Bajar las operaciones vigentes dic-2027 en ${fmtN(-v.d)} clientes (a ${fmtN(M.P.vigObj + v.d)}): para llegar a la meta debe colocar ${fmtN(cu.prod.n)} créditos (${sgnTxt(cu.prod.g)} sobre 2026; Presidencia ${fmtN(cu.prod.nH)}). Pasan a: ${lista(v.a)}.${v.sin >= 0.5 ? ` ${fmtN(v.sin)} clientes sin agencia con holgura.` : ''}`});
+  else if (v.sin >= 0.5) out.push({n: 'rojo', t: `Para sus clientes debe colocar ${fmtN(cu.prod.n)} créditos (${sgnTxt(cu.prod.g)} sobre 2026); ninguna agencia tiene holgura para recibir ${fmtN(v.sin)} clientes: decisión de Presidencia.`});
+  if (v.d > 0.5) out.push({n: 'verde', t: `Puede recibir ${fmtN(v.d)} clientes (de ${lista(v.de)}) sin pasar de ${fmtN(Math.max(cu.prod.n26a, Math.min(cu.prod.nH, cu.prod.n26a * 1.25)))} créditos en el año.`});
+  if (cu.mora.st !== 'verde') out.push({n: cu.mora.st === 'rojo' ? 'rojo' : 'amar', t: `La mora CER > 30 debe bajar de ${fmtP(cu.mora.p0)} a ${fmtP(cu.mora.tgt)} (−${decTxt(cu.mora.red * 100, 0)} %): necesita un plan de recuperación de cartera vencida o revisar el máximo con Presidencia.`});
+  if (cu.prod.g < -0.15 && v.d <= 0.5) out.push({n: 'amar', t: `Coloca ${fmtN(cu.prod.n)} créditos, ${sgnTxt(cu.prod.g)} frente a 2026: su meta de clientes es baja para su capacidad.`});
+  return out;
 }
 function distTecnica(e) {
   const C = cacheSol(), id = 'tec_' + e; if (C[id]) return C[id];
@@ -1160,9 +1248,13 @@ function distTecnica(e) {
 function planAg(k, cpd, e, lam, _x) {
   const P = planAg0(k, cpd, e, lam, _x);
   const i27 = (((meta().crit || {}).ag || {})[k] || {}).ind27;
-  if (!P || P.raw || !P.saldo || !i27 || distModo() !== 'hoja') return P;
+  if (!P || P.raw || !P.saldo || !i27 || !['hoja', 'cc'].includes(distModo())) return P;
   const rep = (tot, w) => { const s = E.sum(w); return w.map(v => s > 0 ? Math.round(tot * v / s * 100) / 100 : Math.round(tot / 12 * 100) / 100); };
   const wO = P.otm.slice(1), wC = P.cast.slice(1);
+  if (distModo() === 'cc') { /* fórmulas de Indicadores Agencias sobre la colocación y los castigos del plan */
+    for (let m = 1; m <= 12; m++) { P.dem[m] = Math.round(P.otm[m] * 0.015 * 100) / 100; P.recdem[m] = Math.round(P.dem[m] * 0.35 * 100) / 100; P.reccast[m] = Math.round(P.cast[m] * 0.15 * 100) / 100; }
+    P.ind27 = true; return P;
+  }
   if (i27.dem != null) { const d = rep(i27.dem, wO); for (let m = 1; m <= 12; m++) P.dem[m] = d[m - 1]; }
   if (i27.recDem != null) { const d = rep(i27.recDem, wO); for (let m = 1; m <= 12; m++) P.recdem[m] = d[m - 1]; }
   if (i27.recCast != null) { const d = rep(i27.recCast, wC); for (let m = 1; m <= 12; m++) P.reccast[m] = d[m - 1]; }
@@ -1182,12 +1274,35 @@ function planAg0(k, cpd, e, lam, _x) {
   const rc = recCastAg(k, q);
   if (rc.recMes) p.recMes = rc.recMes;
   if (rc.cast) { p.castRate = rc.cast.m; p.castnRate = rc.cast.n; p.castFact = Array(12).fill(1); }
-  { const i27 = (((meta().crit || {}).ag || {})[k] || {}).ind27; if (i27 && distModo() === 'hoja') {
+  { const i27 = (((meta().crit || {}).ag || {})[k] || {}).ind27; if (i27 && ['hoja', 'cc'].includes(distModo())) {
     if (i27.castM != null) p.castMes = Array(12).fill(i27.castM / 12);
     if (i27.castN != null) p.castnMes = E.lr(Math.round(i27.castN), Array(12).fill(1)); } }
   const colA = colAseAg(k), obj = cr && +cr.saldoObj > 0 && (meta().crit || {}).colocModo !== 'niveles' ? +cr.saldoObj : 0;
   /* Manda la hoja "Planificación CredAgenicas 2027" (v2): créditos = asesores × créditos al mes × 12, monto de Presidencia,
      cartera y operaciones vigentes dic-2027 de la hoja. La tasa de cancelación y la recuperación resultan del cuadre. */
+  /* Manda la cartera y los clientes de Presidencia por agencia; recuperación y cancelación reales (históricas).
+     Créditos: los que llevan a los clientes dic-2027. Monto promedio: el que lleva a la cartera dic-2027. */
+  if (cr && cr.metaHoja && +cr.saldoObj > 0 && +cr.vigObj > 0 && !colA && distModo() === 'cc') {
+    const shape = E.sum(otn) > 0 ? otn : W12, nueva = q.F.s.otn.slice(1).filter(v => v > 0).length < 12, closeReal = p.closeRate;
+    if (nueva) p.closeRate = Math.max(closeReal, closeMediana());
+    const objS = +cr.saldoObj, vObj = +cr.vigObj;
+    const pmMan = Array.isArray(q.pl.promMes) && q.pl.promMes.some(v => v != null && v !== '' && isFinite(v));
+    const run = (n, f) => { p.otnAuto = E.lr(Math.max(0, Math.round(n)), shape); p.promScale = f; return E.plan2027(q.F, p, W12, q.mix, q.pl.otnMes, q.pl.promMes, q.sR); };
+    if (_x && _x.nf) return run(_x.nf[0], _x.nf[1]);
+    const nPorVig = v => { let lo = -1, hi = Math.max(50, E.sum(otn)); while (vigDic(q, p, E.lr(hi, shape)) < v && hi < 1e6) hi *= 2;
+      while (hi - lo > 1) { const mid = Math.floor((lo + hi) / 2); if (mid >= 0 && vigDic(q, p, E.lr(mid, shape)) >= v) hi = mid; else lo = mid; } return hi; };
+    const fPorSal = (n, objetivo) => { let lo = 0.02, hi = 2; while (run(n, hi).saldo[12] < objetivo && hi < 64) hi *= 2;
+      for (let i = 0; i < 60; i++) { const mid = (lo + hi) / 2; if (run(n, mid).saldo[12] < objetivo) lo = mid; else hi = mid; } return (lo + hi) / 2; };
+    let n, f = 1;
+    if (oT > 0) { n = Math.round(oT); f = pmMan ? 1 : fPorSal(n, objS); }
+    else if (pmMan) { let lo = 0, hi = Math.max(50, E.sum(otn)); while (run(hi, 1).saldo[12] < objS && hi < 1e6) hi *= 2;
+      while (hi - lo > 1) { const mid = Math.floor((lo + hi) / 2); if (run(mid, 1).saldo[12] < objS) lo = mid; else hi = mid; }
+      n = Math.abs(run(lo, 1).saldo[12] - objS) <= Math.abs(run(hi, 1).saldo[12] - objS) ? lo : hi; }
+    else { n = nPorVig(vObj); f = fPorSal(n, objS); }
+    const P = run(n, f), nP = E.sum(P.otn.slice(1));
+    return Object.assign(P, {otnSug: n, otnCrit, metaSaldo: objS, vigObj: vObj, otnHoja: +cr.otn, recModo: rc.modo,
+      cc: {f, n, monto: nP ? E.sum(P.otm.slice(1)) / nP : 0, base: f > 0 && nP ? E.sum(P.otm.slice(1)) / nP / f : 0, montoPres: +cr.prom || 0, nueva, closeReal, close: p.closeRate, pmMan, man: oT > 0}});
+  }
   if (cr && cr.metaHoja && +cr.saldoObj > 0 && cr.otn > 0 && !colA && distModo() === 'tecnica') {
     const shape = E.sum(otn) > 0 ? otn : W12, nueva = q.F.s.otn.slice(1).filter(v => v > 0).length < 12, closeReal = p.closeRate;
     if (nueva) p.closeRate = Math.max(closeReal, closeMediana());
@@ -1488,6 +1603,13 @@ function avisosAg(k, M) {
     else if (cm && +cm.saldoObj > 0 && P.metaAjust == null && !P.tec && Math.abs(P.saldo[12] - cm.saldoObj) > Math.max(10, +cm.prom || 0)) { const pl0 = S.planes[k] || {}; const porque = +pl0.otnTot > 0 ? 'el número de créditos del año está escrito a mano' : (pl0.otnMes || []).some(v => v != null && v !== '') ? 'hay meses con créditos escritos a mano' : 'hay valores fijados a mano'; out.push({n: 'alto', t: `La cartera planificada (USD ${fmtN(P.saldo[12])}) no es la meta de Presidencia (USD ${fmtN(cm.saldoObj)}) porque ${porque}. Usa "Restablecer valores" para volver al cálculo.`}); } }
   { const vm = vigMinAg(k); if (vm && P.vgn[12] < vm.tot) out.push({n: P.tec || P.porAg ? 'info' : 'medio', t: `Operaciones vigentes dic-2027: ${fmtN(P.vgn[12])} (${fmtN(P.vgn[12] / vm.n, 0)} por asesor), bajo el mínimo de Presidencia de ${fmtN(vm.tot)} (${fmtN(vm.porAse, 0)} por asesor, hoja Indicadores Agencias).`}); }
   if (P.porAg && P.vgn[12] < M.F.s.vgn[12]) out.push({n: 'medio', p: P.vgn[12] < M.F.s.vgn[12] * 0.98, t: `Con la cartera de Presidencia la agencia pierde ${fmtN(M.F.s.vgn[12] - P.vgn[12])} clientes (de ${fmtN(M.F.s.vgn[12])} a ${fmtN(P.vgn[12])} operaciones vigentes): su monto promedio y su recuperación no alcanzan para reponerlos. Revisa con Presidencia el monto o la cartera.`});
+  if (P.cc) { const cu = cumpleAg(k, M);
+    if (cu) {
+      if (cu.prod.st === 'rojo') out.push({n: 'medio', p: 1, t: `Para llegar a los clientes de Presidencia coloca ${fmtN(cu.prod.n)} créditos: ${sgnTxt(cu.prod.g)} sobre 2026 (${fmtN(cu.prod.n26)}) y ${fmtN(cu.prod.cpm, 1)} por asesor al mes (Presidencia ${fmtN(cu.prod.tar, 1)}).`});
+      if (cu.monto.st === 'rojo') out.push({n: 'medio', p: 1, t: `Para llegar a la cartera de Presidencia con su recuperación real, el monto promedio debe ser USD ${fmtN(cu.monto.m)}: ${sgnTxt(cu.monto.d)} frente a 2026 (USD ${fmtN(cu.monto.m26)}).`});
+      if (cu.mora.st === 'rojo') out.push({n: 'medio', p: 1, t: `La mora CER > 30 debe bajar de ${fmtP(cu.mora.p0)} a ${fmtP(cu.mora.tgt)} en el año.`});
+      if (P.cc.nueva) out.push({n: 'info', t: `Agencia con menos de 12 meses de historia: se usa la cancelación mediana FACES (${decTxt(P.cc.close * 100, 2)} %; la suya en 2026: ${decTxt(P.cc.closeReal * 100, 2)} %).`});
+    } }
   if (P.tec) { const t = P.tec, F = M.F.s, n26 = E.sum(F.otn.slice(1)), m26 = n26 ? E.sum(F.otm.slice(1)) / n26 : 0, mP = E.sum(P.otn.slice(1)) ? E.sum(P.otm.slice(1)) / E.sum(P.otn.slice(1)) : 0;
     if (m26 && mP < m26 * 0.75) out.push({n: 'medio', p: 1, t: `El monto promedio de Presidencia (USD ${fmtN(mP)}) es ${sgnTxt(mP / m26 - 1)} frente al de 2026 (USD ${fmtN(m26)}); con él la cartera de la agencia ${mP > m26 ? 'sube' : 'baja'} aunque coloque los mismos créditos.`});
     if (t.nueva) out.push({n: 'info', t: `Agencia con menos de 12 meses de historia: su cartera todavía no madura y en 2026 canceló ${decTxt(t.closeReal * 100, 2)} % de las operaciones al mes. Para 2027 se usa la mediana FACES (${decTxt(t.close * 100, 2)} %).`}); }
@@ -1496,8 +1618,8 @@ function avisosAg(k, M) {
     if (Math.abs(dc) > 0.25) out.push({n: 'medio', p: Math.abs(dc) > 0.5, t: `Para llegar a las operaciones vigentes de Presidencia se cancela ${decTxt(h.closeHoja * 100, 2)} % de las operaciones al mes, ${sgnTxt(dc)} frente a 2026 (${decTxt(h.closeReal * 100, 2)} %).`}); }
   if (a.catTH) { const fuera = M.ases.filter(x => !x.vacante && !x.catTH); if (fuera.length) out.push({n: 'medio', t: `${fuera.map(x => x.n).join('; ')}: está en el Tipo de Cartera pero no en las categorías de Talento Humano; revisa si sigue como asesor en 2027.`}); }
   const crX = critAg(k); if (crX) { const nv = M.ases.filter(x => x.vacante).length, nr = M.ases.length - nv; if (nv) out.push({n: 'info', t: `Presidencia prevé ${crX.nAses} asesores para 2027 y hoy hay ${nr}: ${nv === 1 ? 'una plaza queda' : nv + ' plazas quedan'} como "Asesor por contratar" desde enero.`}); else if (nr > crX.nAses) out.push({n: 'info', t: `Hoy hay ${nr} asesores y Presidencia prevé ${crX.nAses} para 2027: la meta de Presidencia se reparte entre los ${nr}.`}); }
-  if (gS != null && gS >= 1) out.push({n: 'alto', t: `Se está pidiendo un crecimiento de cartera de ${pct(gS)}.`});
-  else if (gS != null && maxS && gS > maxS[1] + 0.05) out.push({n: 'alto', t: `Crecimiento de cartera de ${pct(gS)}: la agencia nunca registró este crecimiento (máximo ${pct(maxS[1])} en ${maxS[0]}).`});
+  if (gS != null && gS >= 1) out.push({n: P.cc ? 'info' : 'alto', t: `Se está pidiendo un crecimiento de cartera de ${pct(gS)}.`});
+  else if (gS != null && maxS && gS > maxS[1] + 0.05) out.push({n: P.cc ? 'info' : 'alto', t: `Crecimiento de cartera de ${pct(gS)}: la agencia nunca registró este crecimiento (máximo ${pct(maxS[1])} en ${maxS[0]}).`});
   if (gO != null && gO >= 1) out.push({n: 'alto', t: `Se está pidiendo un crecimiento de colocación de ${pct(gO)}.`});
   else if (gO != null && maxO && gO > maxO[1] + 0.05) out.push({n: 'medio', t: `Crecimiento de colocación de ${pct(gO)}; en 2026 creció ${pct(maxO[1])}.`});
   if (gS != null && gS < 0) out.push({n: 'medio', p: gS < -0.02, t: `La cartera decrece ${pct(-gS)}: la colocación no alcanza a reponer la recuperación.`});
@@ -1925,25 +2047,29 @@ function panelAgencia(k) {
   const promAuto = E.sum(M.P.otn.slice(1)) ? E.sum(M.P.otm.slice(1)) / E.sum(M.P.otn.slice(1)) : 0;
   const lockP = !!colAseAg(k), otnSug = M.P.otnSug != null ? M.P.otnSug : E.sum(M.P.otn.slice(1)), crA = critAg(k), gVig = crecVigAg(k), vmA = vigMinAg(k), gVigFj = pl.crecVig != null && pl.crecVig !== '', otnPlan = E.sum(M.P.otn.slice(1)), hayEd = !!(pl.otnTot || (pl.otnMes || []).some(v => v != null && v !== '') || (pl.promMes || []).some(v => v != null && v !== '') || (pl.pesoMes || []).some(v => v != null && v !== '') || lockP || gVigFj || Object.keys(pl.cerFin || {}).length);
   /* Revisar parámetros solo cuando algo no está bien: avisos altos o medios, o valores escritos a mano. */
-  const rev = av.filter(x => x.n === 'alto' || x.p), revisa = rev.length > 0 || editadoAg(k);
+  const rev = av.filter(x => x.n === 'alto' || x.p), revisa = rev.length > 0 || editadoAg(k) || (M.P.cc && niv === 'ag' && textoRecom(k).some(x => x.n === 'rojo'));
   const abierto = (S.openEdit || {})[k] != null ? S.openEdit[k] : revisa;
   const barraProm = niv === 'ag' ? `<details class="editbox${revisa ? '' : ' ok'}" data-desp="edit" data-agk="${k}" ${abierto ? 'open' : ''}>
       <summary class="eb-h"><b>Parámetros editables</b>${revisa ? `<span class="pill rev">Revisar: ${rev.length ? rev.length + ' aviso' + (rev.length > 1 ? 's' : '') : ''}${rev.length && editadoAg(k) ? ' · ' : ''}${editadoAg(k) ? 'valores escritos a mano' : ''}</span>` : '<span class="pill ok">Sin observaciones: no requiere cambios</span>'}<span class="muted small">${abierto ? 'Las casillas resaltadas se pueden cambiar; si las borras vuelven al valor calculado.' : 'Clic para ver o cambiar los valores calculados.'}</span>${ed && hayEd ? '<button class="btn" data-resetall="' + k + '">Restablecer valores</button>' : ''}</summary>
       ${rev.length ? `<ul class="val small eb-rev">${rev.map(x => `<li class="${x.n === 'alto' ? 'flag' : ''}">${esc(x.t)}</li>`).join('')}</ul>` : ''}
+      ${M.P.cc ? (() => { const cu = cumpleAg(k, M), rc = textoRecom(k); if (!cu) return '';
+        const chip = (lb, st, txt) => `<span class="sem ${st}"><i></i><b>${lb}</b> ${txt}</span>`;
+        return `<div class="recbox"><div class="rb-h"><b>Cumplibilidad</b>${chip('Productividad', cu.prod.st, `${fmtN(cu.prod.n)} créditos · ${sgnTxt(cu.prod.g)} vs 2026 · ${fmtN(cu.prod.cpm, 1)} por asesor al mes`)}${chip('Monto', cu.monto.st, `USD ${fmtN(cu.monto.m)} · ${sgnTxt(cu.monto.d)} vs 2026`)}${chip('Mora', cu.mora.st, `CER > 30 ${fmtP(cu.mora.p0)} → ${cu.mora.tgt != null ? fmtP(cu.mora.tgt) : '—'}`)}</div>
+          <div class="rb-t"><b>Recomendación</b>${rc.length ? `<ul>${rc.map(x => `<li class="${x.n}">${x.t}</li>`).join('')}</ul>` : '<span class="muted small"> Cumplible con su historia: no requiere cambios.</span>'}</div></div>`; })() : ''}
       <div class="eb-g">
         <div><label for="otnall">Número de créditos en el año</label><input id="otnall" class="lev-md selall${+pl.otnTot > 0 ? ' ov' : ''}" type="text" inputmode="numeric" data-otntot="1" data-agk="${k}" value="${+pl.otnTot > 0 ? +pl.otnTot : ''}" placeholder="${fmtN(otnSug)}" ${ed ? '' : 'disabled'}>
-          <div class="muted small">${M.P.porAg && !(+pl.otnTot > 0) ? `<b>Cartera de la agencia según Presidencia.</b> Créditos calculados para llegar a su cartera dic-2027 (USD ${fmtN(M.P.metaSaldo)}) con el monto promedio de Presidencia y la recuperación ${M.P.recModo === 'pres' ? 'de Presidencia (hoja PROY)' : 'real 2026'}. La hoja de Presidencia pone ${fmtN(M.P.otnHoja || 0)} créditos (2026: ${fmtN(E.sum(M.F.s.otn.slice(1)))}); es referencial.` : M.P.tec ? (t => `${+pl.otnTot > 0 ? `Fijado a mano (distribución técnica: ${fmtN(M.P.otnSug)}). ` : ''}<b>Distribución técnica.</b> En 2026 la agencia colocó ${fmtN(t.cap.n26)} créditos${t.cap.act < 12 ? ` en ${t.cap.act} meses (${fmtN(t.cap.n26a)} al año)` : ''} con ${t.cap.a26} asesores; con el equipo 2027 de Presidencia (${t.cap.a27} asesores, ponderados por la tarifa de su categoría) su capacidad es ${t.cap.inc ? `${fmtN(t.cap.base)} + ${fmtN(t.cap.inc * t.cap.a27 * 12)} por la observación de Presidencia (${t.cap.inc} crédito${t.cap.inc > 1 ? 's' : ''} más por asesor al mes) = ` : ''}<b>${fmtN(t.cap.n)}</b>. Todas las agencias colocan el ${decTxt(t.phi * 100, 1)} % de su capacidad para que FACES llegue a la cartera de Presidencia (USD ${fmtN(t.objF)}) con la recuperación ${M.P.recModo === 'pres' ? 'de Presidencia' : 'real 2026'}${t.piso ? `; esta agencia sube a ${fmtN(t.floor)} para no perder clientes` : ''}. Hoja de Presidencia: ${fmtN(M.P.otnHoja)} créditos y cartera USD ${fmtN(M.P.metaSaldo)}.`)(M.P.tec) : M.P.hoja ? `${+pl.otnTot > 0 ? 'Fijado a mano. ' : ''}Hoja Planificación CredAgenicas 2027 de Presidencia · ${crA ? esc(textoCrit(crA)) : ''}. Con estos créditos, el monto de Presidencia y su cartera (USD ${fmtN(M.P.metaSaldo)}), la recuperación del año resulta en <b>USD ${fmtN(M.P.hoja.recImpl)}</b> (con la tasa real 2026 serían USD ${fmtN(M.P.hoja.recReal)}, ${sgnTxt(M.P.hoja.recReal ? M.P.hoja.recImpl / M.P.hoja.recReal - 1 : 0)}).` : M.P.metaAjust != null && !(+pl.otnTot > 0) && Math.abs(M.P.metaAjust - M.P.metaSaldo) > 1 ? (M.P.metaAjust > M.P.metaSaldo ? `Para no perder clientes necesita <b>${fmtN(M.P.otnSug)}</b> créditos (con la cartera de Presidencia serían ${fmtN(M.P.piso.nCart)}). Con el monto de Presidencia su cartera sube a USD ${fmtN(M.P.saldo[12])} (+${fmtN(M.P.saldo[12] - M.P.metaSaldo)}); lo compensan las agencias con holgura y el total FACES queda igual.` : `Cede USD ${fmtN(M.P.metaSaldo - M.P.saldo[12])} de cartera a las agencias que necesitan más créditos: <b>${fmtN(M.P.otnSug)}</b> créditos (con la cartera de Presidencia serían ${fmtN(M.P.piso.nCart)}); sus operaciones siguen sin bajar.`) : M.P.metaSaldo && !(+pl.otnTot > 0) ? `Calculado para llegar a la cartera de Presidencia (USD ${fmtN(M.P.metaSaldo)} a dic-2027) con el monto promedio y la recuperación ${M.P.recModo === 'pres' ? 'de Presidencia' : 'real 2026'}. Según el nivel de la agencia serían ${fmtN(M.P.otnCrit || 0)} (2026: ${fmtN(E.sum(M.F.s.otn.slice(1)))}). Con estos créditos las operaciones vigentes llegan a ${fmtN(M.P.vgn[12])} a dic-2027 (detalle a la derecha).` : M.P.metaSaldo ? `Fijado a mano: la cartera ya no llega a la de Presidencia (USD ${fmtN(M.P.metaSaldo)}); el plan da USD ${fmtN(M.P.saldo[12])}. Borra la casilla para volver al cálculo.` : crA ? `Criterio de Presidencia · ${esc(textoCrit(crA))}.${otnSug > M.P.otnCrit ? ` Sube a <b>${fmtN(otnSug)}</b> para que las operaciones vigentes crezcan ${decTxt((gVig || 0) * 100, 1)} %.` : ''} (2026: ${fmtN(E.sum(M.F.s.otn.slice(1)))}). Las vacaciones solo los reparten entre meses.` : `Sugerido: ${fmtN(otnSug)} créditos (2026: ${fmtN(E.sum(M.F.s.otn.slice(1)))})${gVig != null ? `, suficiente para que las operaciones vigentes crezcan al menos ${decTxt(gVig * 100, 1)} %` : ''}. Se reparte en los meses con el peso estacional.`}</div></div>
+          <div class="muted small">${M.P.cc ? (c => c.man ? `Fijado a mano: el monto se calcula para llegar a la cartera de Presidencia; las operaciones vigentes resultan (${fmtN(M.P.vgn[12])} frente a ${fmtN(M.P.vigObj)}).` : c.pmMan ? `Con el monto escrito a mano, los créditos se calculan para llegar a la cartera de Presidencia; las operaciones vigentes resultan (${fmtN(M.P.vgn[12])} frente a ${fmtN(M.P.vigObj)}).` : `<b>Créditos para llegar a los clientes de Presidencia</b> (${fmtN(M.P.vigObj)} a dic-2027) con la cancelación ${c.nueva ? 'mediana FACES' : 'real 2026'} (${decTxt(c.close * 100, 2)} % al mes). Referencia de Presidencia: ${fmtN(M.P.otnHoja)} · 2026: ${fmtN(E.sum(M.F.s.otn.slice(1)))}.`)(M.P.cc) : M.P.porAg && !(+pl.otnTot > 0) ? `<b>Cartera de la agencia según Presidencia.</b> Créditos calculados para llegar a su cartera dic-2027 (USD ${fmtN(M.P.metaSaldo)}) con el monto promedio de Presidencia y la recuperación ${M.P.recModo === 'pres' ? 'de Presidencia (hoja PROY)' : 'real 2026'}. La hoja de Presidencia pone ${fmtN(M.P.otnHoja || 0)} créditos (2026: ${fmtN(E.sum(M.F.s.otn.slice(1)))}); es referencial.` : M.P.tec ? (t => `${+pl.otnTot > 0 ? `Fijado a mano (distribución técnica: ${fmtN(M.P.otnSug)}). ` : ''}<b>Distribución técnica.</b> En 2026 la agencia colocó ${fmtN(t.cap.n26)} créditos${t.cap.act < 12 ? ` en ${t.cap.act} meses (${fmtN(t.cap.n26a)} al año)` : ''} con ${t.cap.a26} asesores; con el equipo 2027 de Presidencia (${t.cap.a27} asesores, ponderados por la tarifa de su categoría) su capacidad es ${t.cap.inc ? `${fmtN(t.cap.base)} + ${fmtN(t.cap.inc * t.cap.a27 * 12)} por la observación de Presidencia (${t.cap.inc} crédito${t.cap.inc > 1 ? 's' : ''} más por asesor al mes) = ` : ''}<b>${fmtN(t.cap.n)}</b>. Todas las agencias colocan el ${decTxt(t.phi * 100, 1)} % de su capacidad para que FACES llegue a la cartera de Presidencia (USD ${fmtN(t.objF)}) con la recuperación ${M.P.recModo === 'pres' ? 'de Presidencia' : 'real 2026'}${t.piso ? `; esta agencia sube a ${fmtN(t.floor)} para no perder clientes` : ''}. Hoja de Presidencia: ${fmtN(M.P.otnHoja)} créditos y cartera USD ${fmtN(M.P.metaSaldo)}.`)(M.P.tec) : M.P.hoja ? `${+pl.otnTot > 0 ? 'Fijado a mano. ' : ''}Hoja Planificación CredAgenicas 2027 de Presidencia · ${crA ? esc(textoCrit(crA)) : ''}. Con estos créditos, el monto de Presidencia y su cartera (USD ${fmtN(M.P.metaSaldo)}), la recuperación del año resulta en <b>USD ${fmtN(M.P.hoja.recImpl)}</b> (con la tasa real 2026 serían USD ${fmtN(M.P.hoja.recReal)}, ${sgnTxt(M.P.hoja.recReal ? M.P.hoja.recImpl / M.P.hoja.recReal - 1 : 0)}).` : M.P.metaAjust != null && !(+pl.otnTot > 0) && Math.abs(M.P.metaAjust - M.P.metaSaldo) > 1 ? (M.P.metaAjust > M.P.metaSaldo ? `Para no perder clientes necesita <b>${fmtN(M.P.otnSug)}</b> créditos (con la cartera de Presidencia serían ${fmtN(M.P.piso.nCart)}). Con el monto de Presidencia su cartera sube a USD ${fmtN(M.P.saldo[12])} (+${fmtN(M.P.saldo[12] - M.P.metaSaldo)}); lo compensan las agencias con holgura y el total FACES queda igual.` : `Cede USD ${fmtN(M.P.metaSaldo - M.P.saldo[12])} de cartera a las agencias que necesitan más créditos: <b>${fmtN(M.P.otnSug)}</b> créditos (con la cartera de Presidencia serían ${fmtN(M.P.piso.nCart)}); sus operaciones siguen sin bajar.`) : M.P.metaSaldo && !(+pl.otnTot > 0) ? `Calculado para llegar a la cartera de Presidencia (USD ${fmtN(M.P.metaSaldo)} a dic-2027) con el monto promedio y la recuperación ${M.P.recModo === 'pres' ? 'de Presidencia' : 'real 2026'}. Según el nivel de la agencia serían ${fmtN(M.P.otnCrit || 0)} (2026: ${fmtN(E.sum(M.F.s.otn.slice(1)))}). Con estos créditos las operaciones vigentes llegan a ${fmtN(M.P.vgn[12])} a dic-2027 (detalle a la derecha).` : M.P.metaSaldo ? `Fijado a mano: la cartera ya no llega a la de Presidencia (USD ${fmtN(M.P.metaSaldo)}); el plan da USD ${fmtN(M.P.saldo[12])}. Borra la casilla para volver al cálculo.` : crA ? `Criterio de Presidencia · ${esc(textoCrit(crA))}.${otnSug > M.P.otnCrit ? ` Sube a <b>${fmtN(otnSug)}</b> para que las operaciones vigentes crezcan ${decTxt((gVig || 0) * 100, 1)} %.` : ''} (2026: ${fmtN(E.sum(M.F.s.otn.slice(1)))}). Las vacaciones solo los reparten entre meses.` : `Sugerido: ${fmtN(otnSug)} créditos (2026: ${fmtN(E.sum(M.F.s.otn.slice(1)))})${gVig != null ? `, suficiente para que las operaciones vigentes crezcan al menos ${decTxt(gVig * 100, 1)} %` : ''}. Se reparte en los meses con el peso estacional.`}</div></div>
         <div><label for="crecvig">Operaciones vigentes (clientes)</label><span class="muted small">Crecimiento mínimo (%): </span><input id="crecvig" class="lev-sm selall${gVigFj ? ' ov' : ''}" type="text" inputmode="decimal" data-crecvig="1" data-agk="${k}" value="${gVigFj ? decTxt(+pl.crecVig, 1) : ''}" placeholder="${meta().crecVig != null && meta().crecVig !== '' ? decTxt(+meta().crecVig * 100, 1) : 'Por definir'}" ${ed ? '' : 'disabled'}>
           ${(() => { const v0 = M.F.s.vgn[12], v1 = M.P.vgn[12], ot = E.sum(M.P.otn.slice(1)), sal = E.sum(M.P.canc.slice(1)) + E.sum(M.P.castn.slice(1));
             const minP = vmA ? Math.ceil(vmA.tot) : 0, piso = M.P.tec ? Math.ceil(v0 * (1 + Math.max(0, gVig || 0))) : Math.max(minP, Math.ceil(v0 * (1 + Math.max(0, gVig || 0)))), ok = v1 >= piso;
             return `<table class="vigmov"><tbody>
               <tr><td>Hoy (dic-2026)</td><td>${fmtN(v0)}</td></tr>
               <tr class="t"><td>Plan dic-2027</td><td>${fmtN(v1)} <span class="${v1 < v0 ? 'neg' : 'pos'}">(${sgnTxt(v0 ? v1 / v0 - 1 : 0)})</span></td></tr>
-              ${M.P.porAg ? `<tr><td>Presidencia (referencial)</td><td>${M.P.vigObj ? fmtN(M.P.vigObj) : '—'}</td></tr><tr><td>No perder clientes</td><td class="${v1 >= v0 ? 'pos' : 'neg'}">${fmtN(v0)} · ${v1 >= v0 ? 'cumple' : 'pierde ' + fmtN(v0 - v1)}</td></tr>` : M.P.tec ? `<tr><td>Presidencia (referencial)</td><td>${M.P.vigObj ? fmtN(M.P.vigObj) : '—'}</td></tr><tr><td>Mínimo exigido (no perder clientes)</td><td class="${ok ? 'pos' : 'neg'}">${fmtN(piso)} · ${ok ? 'cumple' : 'no cumple'}</td></tr>${minP ? `<tr><td>Referencia por asesor de Presidencia</td><td class="${v1 >= minP ? 'pos' : 'neg'}">${fmtN(minP)} · ${v1 >= minP ? 'cumple' : 'no cumple'}</td></tr>` : ''}` : M.P.hoja ? `<tr><td>Meta de Presidencia (hoja)</td><td>${M.P.vigObj ? fmtN(M.P.vigObj) : '—'}</td></tr>${minP ? `<tr><td>Mínimo por asesor de Presidencia</td><td class="${v1 >= minP ? 'pos' : 'neg'}">${fmtN(minP)} · ${v1 >= minP ? 'cumple' : 'no cumple'}</td></tr>` : ''}` : `<tr><td>Mínimo exigido${minP >= piso && minP ? ' (Presidencia por asesor)' : gVig ? ` (crecer ${decTxt(gVig * 100, 1)} %)` : ' (no bajar)'}</td><td class="${ok ? 'pos' : 'neg'}">${fmtN(piso)} · ${ok ? 'cumple' : 'no cumple'}</td></tr>`}
+              ${M.P.cc ? `<tr><td>Meta de Presidencia (manda)</td><td class="${Math.abs(v1 - M.P.vigObj) <= 1 ? 'pos' : 'neg'}">${fmtN(M.P.vigObj)} · ${Math.abs(v1 - M.P.vigObj) <= 1 ? 'cumple' : 'diferencia ' + fmtN(v1 - M.P.vigObj)}</td></tr>` : M.P.porAg ? `<tr><td>Presidencia (referencial)</td><td>${M.P.vigObj ? fmtN(M.P.vigObj) : '—'}</td></tr><tr><td>No perder clientes</td><td class="${v1 >= v0 ? 'pos' : 'neg'}">${fmtN(v0)} · ${v1 >= v0 ? 'cumple' : 'pierde ' + fmtN(v0 - v1)}</td></tr>` : M.P.tec ? `<tr><td>Presidencia (referencial)</td><td>${M.P.vigObj ? fmtN(M.P.vigObj) : '—'}</td></tr><tr><td>Mínimo exigido (no perder clientes)</td><td class="${ok ? 'pos' : 'neg'}">${fmtN(piso)} · ${ok ? 'cumple' : 'no cumple'}</td></tr>${minP ? `<tr><td>Referencia por asesor de Presidencia</td><td class="${v1 >= minP ? 'pos' : 'neg'}">${fmtN(minP)} · ${v1 >= minP ? 'cumple' : 'no cumple'}</td></tr>` : ''}` : M.P.hoja ? `<tr><td>Meta de Presidencia (hoja)</td><td>${M.P.vigObj ? fmtN(M.P.vigObj) : '—'}</td></tr>${minP ? `<tr><td>Mínimo por asesor de Presidencia</td><td class="${v1 >= minP ? 'pos' : 'neg'}">${fmtN(minP)} · ${v1 >= minP ? 'cumple' : 'no cumple'}</td></tr>` : ''}` : `<tr><td>Mínimo exigido${minP >= piso && minP ? ' (Presidencia por asesor)' : gVig ? ` (crecer ${decTxt(gVig * 100, 1)} %)` : ' (no bajar)'}</td><td class="${ok ? 'pos' : 'neg'}">${fmtN(piso)} · ${ok ? 'cumple' : 'no cumple'}</td></tr>`}
             </tbody></table>
             <div class="muted small">En 2027 entran ${fmtN(ot)} créditos nuevos y salen ${fmtN(sal)} (cancelados y castigados).${M.P.tec ? ` Se cancela ${decTxt(M.P.tec.close * 100, 2)} % de las operaciones al mes${M.P.tec.nueva ? ` (mediana FACES; 2026: ${decTxt(M.P.tec.closeReal * 100, 2)} %)` : ', como en 2026'}.` : ''}${M.P.hoja ? ` Para llegar a la meta se cancela ${decTxt(M.P.hoja.closeHoja * 100, 2)} % de las operaciones al mes (2026: ${decTxt(M.P.hoja.closeReal * 100, 2)} %).` : ''}</div>`; })()}</div>
         <div><label for="promall">Monto promedio de crédito en el año (USD)</label><input id="promall" class="lev-md selall${promTodo ? ' ov' : ''}" type="text" inputmode="numeric" data-promall="1" data-agk="${k}" value="${promTodo}" placeholder="${fmtN(promAuto)}" ${ed && !lockP ? '' : 'disabled'}>
-          <div class="muted small">${lockP ? 'Definido por la colocación de cada asesor (Detalle de asesores).' : crA && crA.prom > 0 ? `Criterio de Presidencia: USD ${fmtN(crA.prom)} (2026: USD ${fmtN(promCategorias().hist[k] || 0)}).` : `Sugerido: USD ${fmtN(promAuto)} según la categoría de los asesores (2026: USD ${fmtN(promCategorias().hist[k] || 0)}).`}</div></div>
+          <div class="muted small">${lockP ? 'Definido por la colocación de cada asesor (Detalle de asesores).' : M.P.cc && !M.P.cc.pmMan ? `<b>Monto para llegar a la cartera de Presidencia</b> (USD ${fmtN(M.P.metaSaldo)}) con la recuperación ${M.P.recModo === 'pres' ? 'de Presidencia' : 'real 2026'}: USD ${fmtN(M.P.cc.monto)}. Referencia de Presidencia: USD ${fmtN(M.P.cc.montoPres)} · 2026: USD ${fmtN(promCategorias().hist[k] || 0)}.` : crA && crA.prom > 0 ? `Criterio de Presidencia: USD ${fmtN(crA.prom)} (2026: USD ${fmtN(promCategorias().hist[k] || 0)}).` : `Sugerido: USD ${fmtN(promAuto)} según la categoría de los asesores (2026: USD ${fmtN(promCategorias().hist[k] || 0)}).`}</div></div>
         <div><label>Mora a diciembre 2027 (%)</label><div class="cerbox">${[['pc1', 'CER > 1'], ['pc15', 'CER > 15'], ['pc30', 'CER > 30']].map(([key, lb]) => { const f = (pl.cerFin || {})[key], fj = f != null && f !== ''; return `<span><span class="muted small">${lb}</span><input id="cf_${key}" class="lev-sm selall${fj ? ' ov' : ''}" type="text" inputmode="decimal" data-cerfin="${key}" data-agk="${k}" value="${fj ? decTxt(+f, 2) : ''}" placeholder="${decTxt(M.P[key][12] * 100, 2)}" ${ed ? '' : 'disabled'}></span>`; }).join('')}</div>
           ${[['pc1', 'CER > 1'], ['pc15', 'CER > 15'], ['pc30', 'CER > 30']].map(([key, lb]) => { const f = (pl.cerFin || {})[key]; if (f == null || f === '') return ''; const lg = M.P[key][12] * 100; return Math.abs(lg - +f) > 0.005 ? `<div class="small neg">${lb}: ${esc(motivoCer(lb, +f, lg))}</div>` : ''; }).join('')}
           <div class="muted small">Dic-2026: CER > 1 ${fmtP(M.F.s.saldo[12] ? M.F.s.c1[12] / M.F.s.saldo[12] : 0)} · CER > 30 ${fmtP(M.F.s.saldo[12] ? M.F.s.c30[12] / M.F.s.saldo[12] : 0)}.${(i => i && i.cer30 != null ? ` Máximos de Presidencia (Indicadores Agencias): CER > 1 ${fmtP(i.cer1 || 0)} · CER > 30 ${fmtP(i.cer30)}; si la agencia ya está por debajo, se mantiene.` : '')((((meta().crit || {}).ag || {})[k] || {}).ind27)} La baja se reparte en los meses según el histórico de la mora; ningún mes sube.</div></div>
@@ -2716,7 +2842,7 @@ async function guardarArchivos() {
   }
   const crit = res.find(r => r.tipo === 'crit');
   if (crit) {
-    const body = Object.assign({}, S.meta || {}, {crit: {tar: crit.tar, ag: crit.ag, ind: crit.ind || null, estr: crit.estr || null, cast: crit.cast || null, recModo: ((S.meta || {}).crit || {}).recModo || 'real', distModo: ((S.meta || {}).crit || {}).distModo || 'agencia', distModoManual: !!((S.meta || {}).crit || {}).distModoManual, fecha: new Date().toISOString().slice(0, 10), archivo: crit.f}, upd: new Date().toISOString(), uid: S.me.id});
+    const body = Object.assign({}, S.meta || {}, {crit: {tar: crit.tar, ag: crit.ag, ind: crit.ind || null, estr: crit.estr || null, cast: crit.cast || null, recModo: ((S.meta || {}).crit || {}).recModo || 'real', distModo: ((S.meta || {}).crit || {}).distModo || 'agencia', distModoManual: ((S.meta || {}).crit || {}).distModoManual === 2 ? 2 : false, fecha: new Date().toISOString().slice(0, 10), archivo: crit.f}, upd: new Date().toISOString(), uid: S.me.id});
     S.meta = body; S.ver++;
     try { await S.db.collection('meta').doc('main').set(body); } catch (e) { toast('No se pudieron guardar los criterios de Presidencia: ' + (e.message || e.code)); }
   }
@@ -2830,6 +2956,7 @@ function vistaParametros() {
     <ul class="val">
       <li><b>Nivel de agencia:</b> lo asigna Presidencia en su archivo (columna de nivel de la hoja Planificación CredAgenicas 2027).</li>
       <li><b>Créditos del año:</b> asesores 2027 por categoría × créditos al mes del nivel × 12. Inicial e Inicial Intermedio: ${[1, 2, 3, 4].some(nv => ['INICIAL', 'INICIAL INTERMEDIO'].some(c => tarPropia((C.tar || {})[nv], c))) ? 'con la tarifa que fijó Presidencia; donde no la fijó, como Junior' : 'por definir con Presidencia; mientras tanto colocan como Junior'}.</li>
+      ${ags.some(x => x.metaHoja) && distModo() === 'cc' ? `<li><b>Mandan la cartera y los clientes de Presidencia por agencia</b> (hoja Planificación CredAgenicas 2027). Recuperación y cancelación: reales 2025-2026 de cada agencia. Créditos: los que llevan a los clientes dic-2027; monto promedio: el que lleva a la cartera dic-2027. Créditos y monto de Presidencia: referenciales. Cumplibilidad: monto dentro de ±20 % de su 2026; créditos hasta la tarifa de Presidencia +10 % y no más de +40 % sobre 2026; la mora CER > 30 no debe bajar más de 60 % en el año.</li>` : ''}
       ${ags.some(x => x.metaHoja) && distModo() === 'agencia' ? `<li><b>Manda la cartera de cada agencia</b> (hoja Planificación CredAgenicas 2027): los créditos de cada agencia son los que llegan a su cartera dic-2027 con el monto promedio y los castigos de Presidencia y la recuperación elegida. Créditos y operaciones vigentes de la hoja: referenciales.</li>` : ''}
       ${ags.some(x => x.metaHoja) && distModo() === 'tecnica' ? `<li><b>Distribución técnica sobre la hoja Planificación CredAgenicas 2027:</b> el total FACES de cartera dic-2027 es el de Presidencia, con su monto promedio por agencia y sus castigos. Capacidad de cada agencia = créditos 2026 (anualizados si tiene menos de 12 meses) × peso de su equipo 2027 de Presidencia frente a su equipo actual (cada asesor pesa la tarifa de su categoría), más el incremento de créditos por asesor que Presidencia anota en su observación. Todas colocan el mismo porcentaje de su capacidad hasta llegar a la cartera FACES; ninguna baja de sus operaciones de dic-2026. Recuperación y cancelación reales 2026 (agencias nuevas: cancelación mediana FACES).</li>` : ''}
       ${ags.some(x => x.metaHoja) && distModo() === 'hoja' ? `<li><b>Manda Presidencia por agencia:</b> cartera dic-2027 y operaciones vigentes de la hoja Planificación CredAgenicas 2027; créditos colocados, monto promedio, CER > 1 y CER > 30 a dic-2027, castigos (0,9 % anual de vigentes y cartera), demandados (1,5 % de lo colocado) y sus recuperaciones (35 % de lo demandado, 15 % de lo castigado) de la hoja Indicadores Agencias. La recuperación por amortización y los créditos cancelados resultan del cuadre y se comparan con los reales 2026.</li>` : ''}
@@ -2837,7 +2964,7 @@ function vistaParametros() {
       <li><b>Monto promedio:</b> el fijado por Presidencia para cada agencia (USD ${fmtN(Math.min(...ags.map(x => x.prom).filter(Boolean)))} a ${fmtN(Math.max(...ags.map(x => x.prom)))}).</li>
       <li><b>Asesores:</b> la meta de la agencia sale de los asesores 2027 de Presidencia y se reparte entre los asesores reales según la categoría de Talento Humano. Las plazas sin asesor quedan como "Asesor por contratar" desde enero.</li>
       <li><b>Vacaciones:</b> no reducen el total del año; mueven los créditos de los meses con vacaciones a los demás.</li>
-      ${ags.some(x => x.metaHoja) && distModo() === 'agencia' ? `<li><b>Operaciones vigentes:</b> referenciales; resultan de los créditos de cada agencia con su cancelación real 2026. Las agencias que bajan de sus clientes de dic-2026 se marcan para revisar con Presidencia.</li>` : ags.some(x => x.metaHoja) && distModo() === 'hoja' ? `<li><b>Operaciones vigentes:</b> las de la hoja de Presidencia para cada agencia; los créditos cancelados del mes se ajustan para llegar a ellas.</li>` : `<li><b>Operaciones vigentes mínimas:</b> las de la hoja Indicadores Agencias por asesor según nivel y categoría (asesores 2027 de Presidencia). Ninguna agencia baja de sus operaciones de dic-2026. Si con la cartera de Presidencia una agencia pierde clientes, sube sus créditos y su cartera; lo compensan, en proporción a su holgura, las agencias que crecen en clientes más de lo necesario. El monto promedio de Presidencia no cambia y el total FACES queda igual.</li>`}
+      ${ags.some(x => x.metaHoja) && distModo() === 'cc' ? `<li><b>Operaciones vigentes:</b> las de Presidencia para cada agencia (mandan).</li>` : ags.some(x => x.metaHoja) && distModo() === 'agencia' ? `<li><b>Operaciones vigentes:</b> referenciales; resultan de los créditos de cada agencia con su cancelación real 2026. Las agencias que bajan de sus clientes de dic-2026 se marcan para revisar con Presidencia.</li>` : ags.some(x => x.metaHoja) && distModo() === 'hoja' ? `<li><b>Operaciones vigentes:</b> las de la hoja de Presidencia para cada agencia; los créditos cancelados del mes se ajustan para llegar a ellas.</li>` : `<li><b>Operaciones vigentes mínimas:</b> las de la hoja Indicadores Agencias por asesor según nivel y categoría (asesores 2027 de Presidencia). Ninguna agencia baja de sus operaciones de dic-2026. Si con la cartera de Presidencia una agencia pierde clientes, sube sus créditos y su cartera; lo compensan, en proporción a su holgura, las agencias que crecen en clientes más de lo necesario. El monto promedio de Presidencia no cambia y el total FACES queda igual.</li>`}
       <li><b>Crecimiento mínimo de operaciones vigentes:</b> ${M.crecVig != null && M.crecVig !== '' ? decTxt(g, 1) + ' %' : 'por definir con Presidencia'} frente a dic-2026${propios.length ? `; con valor propio: ${propios.map(k => `${esc(S.ag[k].nombre)} ${decTxt(+S.planes[k].crecVig, 1)} %`).join(', ')}` : ''}. Con meta de cartera queda como observación; en las agencias sin meta, los créditos suben lo necesario.</li>
       <li><b>Mora:</b> el porcentaje de CER > 1, > 15 y > 30 nunca sube de un mes a otro; máximos normativos CER > 1 6,00 % y CER > 30 4,00 % (Tabla 1.1).</li>
       <li><b>Mínimo de colocación por asesor:</b> USD 50.000 Inicial Intermedio, 55.000 Junior, 65.000 Junior I, 75.000 Senior al mes en promedio (Tabla 1.1).</li>
@@ -2868,21 +2995,38 @@ function vistaParametros() {
     const okP = ags.every(x => !x.metaHoja || x.pl), sm = f => E.sum(ags.filter(x => x.metaHoja).map(f));
     const filas = [['Cartera dic-2027 (USD)', sm(x => x.pl ? x.pl.s26 : 0), sm(x => +x.saldoObj || 0), okP ? sm(x => x.pl.saldo) : null],
       [`Créditos colocados 2027 (N.º) · ${dm === 'hoja' ? 'manda' : 'referencial'}`, sm(x => x.pl ? x.pl.n26 : 0), sm(x => +x.otnHoja || x.otn || 0), okP ? sm(x => x.pl.otn) : null],
-      [`Operaciones vigentes dic-2027 (N.º) · ${dm === 'hoja' ? 'manda' : 'referencial'}`, sm(x => x.pl ? x.pl.v26 : 0), sm(x => +x.vigObj || 0), okP ? sm(x => x.pl.vig) : null],
+      [`Operaciones vigentes dic-2027 (N.º) · ${dm === 'hoja' || dm === 'cc' ? 'manda' : 'referencial'}`, sm(x => x.pl ? x.pl.v26 : 0), sm(x => +x.vigObj || 0), okP ? sm(x => x.pl.vig) : null],
       ['Colocación 2027 (USD)', null, sm(x => (+x.otnHoja || x.otn || 0) * (+x.prom || 0)), okP ? sm(x => x.pl.col) : null],
       ['Recuperación 2027 (USD)', null, sm(x => +x.recPres || 0) || null, okP ? sm(x => x.pl.rec) : null],
       ['Castigos 2027 (USD)', null, sm(x => x.ind27 && x.ind27.castM || 0) || null, okP ? sm(x => x.pl.cast) : null],
       ['Demandados 2027 (USD)', null, sm(x => x.ind27 && x.ind27.dem || 0) || null, okP ? sm(x => x.pl.dem) : null]];
-    const dv = (a, b) => a != null && b && Math.abs(a / b - 1) < 0.0001 ? `<span class="muted">${a - b >= 0 ? '+' : ''}${fmtN(a - b)} (redondeo de créditos)</span>` : a != null && b ? `<span class="${a - b >= -0.5 ? 'pos' : 'neg'}">${a - b >= 0 ? '+' : ''}${fmtN(a - b)} (${sgnTxt(a / b - 1)})</span>` : '—';
+    const dv = (a, b) => a != null && b && Math.abs(a / b - 1) < 0.0001 ? `<span class="muted">${Math.round(a - b) === 0 ? 'Cuadra' : (a - b >= 0 ? '+' : '') + fmtN(a - b) + ' (redondeo de créditos)'}</span>` : a != null && b ? `<span class="${a - b >= -0.5 ? 'pos' : 'neg'}">${a - b >= 0 ? '+' : ''}${fmtN(a - b)} (${sgnTxt(a / b - 1)})</span>` : '—';
     tCua = `<section class="card"><div class="hd"><h2>Cuadre FACES con Presidencia</h2><span class="muted small">Total de agencias de la hoja Planificación CredAgenicas 2027</span></div>
       <div class="bar" style="flex-wrap:wrap;gap:10px;align-items:center"><span class="small"><b>Distribución por agencia</b></span>
-        <div class="seg"><button class="btn ${dm === 'agencia' ? 'pri' : ''}" data-distmodo="agencia" ${puedePres() ? '' : 'disabled'}>Cartera de cada agencia (Presidencia)</button><button class="btn ${dm === 'tecnica' ? 'pri' : ''}" data-distmodo="tecnica" ${puedePres() ? '' : 'disabled'}>Técnica (solo total FACES)</button><button class="btn ${dm === 'hoja' ? 'pri' : ''}" data-distmodo="hoja" ${puedePres() ? '' : 'disabled'}>Hoja + Indicadores Agencias (Presidencia)</button></div></div>
+        <div class="seg"><button class="btn ${dm === 'cc' ? 'pri' : ''}" data-distmodo="cc" ${puedePres() ? '' : 'disabled'}>Cartera y clientes (Presidencia)</button><button class="btn ${dm === 'agencia' ? 'pri' : ''}" data-distmodo="agencia" ${puedePres() ? '' : 'disabled'}>Solo cartera</button><button class="btn ${dm === 'tecnica' ? 'pri' : ''}" data-distmodo="tecnica" ${puedePres() ? '' : 'disabled'}>Técnica (total FACES)</button><button class="btn ${dm === 'hoja' ? 'pri' : ''}" data-distmodo="hoja" ${puedePres() ? '' : 'disabled'}>Hoja + Indicadores (todo fijo)</button></div></div>
       <div class="scroll"><table class="tparam"><thead><tr><th class="l">Concepto</th><th>REAL / PRONÓSTICO 2026</th><th>Presidencia 2027</th><th>PLAN 2027</th><th>PLAN vs Presidencia</th></tr></thead><tbody>
-      ${filas.map((f, i) => `<tr><td class="l">${i === 0 ? '<b>' + f[0] + ' · manda</b>' : dm === 'hoja' && /manda/.test(f[0]) ? '<b>' + f[0] + '</b>' : f[0]}</td><td>${f[1] != null ? fmtN(f[1]) : '—'}</td><td>${f[2] != null ? fmtN(f[2]) : '—'}</td><td><b>${f[3] != null ? fmtN(f[3]) : '—'}</b></td><td>${i === 0 || (dm === 'hoja' && /manda/.test(f[0])) ? dv(f[3], f[2]) : f[3] != null && f[2] ? `<span class="muted">${f[3] - f[2] >= 0 ? '+' : ''}${fmtN(f[3] - f[2])} (${sgnTxt(f[3] / f[2] - 1)})</span>` : '—'}</td></tr>`).join('')}
+      ${filas.map((f, i) => `<tr><td class="l">${i === 0 ? '<b>' + f[0] + ' · manda</b>' : (dm === 'hoja' || dm === 'cc') && /· manda/.test(f[0]) ? '<b>' + f[0] + '</b>' : f[0]}</td><td>${f[1] != null ? fmtN(f[1]) : '—'}</td><td>${f[2] != null ? fmtN(f[2]) : '—'}</td><td><b>${f[3] != null ? fmtN(f[3]) : '—'}</b></td><td>${i === 0 || ((dm === 'hoja' || dm === 'cc') && /· manda/.test(f[0])) ? dv(f[3], f[2]) : f[3] != null && f[2] ? `<span class="muted">${f[3] - f[2] >= 0 ? '+' : ''}${fmtN(f[3] - f[2])} (${sgnTxt(f[3] / f[2] - 1)})</span>` : '—'}</td></tr>`).join('')}
       </tbody></table></div>
-      <div class="note small">${dm === 'agencia' ? `<b>Cartera de cada agencia:</b> manda la cartera dic-2027 que Presidencia fija para cada agencia. Los créditos se calculan para llegar a ella con su monto promedio, sus castigos y la recuperación ${rm === 'pres' ? 'de Presidencia (hoja PROY)' : 'real 2026 de cada agencia'}; los créditos y clientes de la hoja son referenciales. Las agencias que con esa cartera pierden clientes quedan marcadas para revisar.` : dm === 'tecnica' ? `<b>Técnica:</b> manda la cartera total de Presidencia; sus créditos y clientes son referenciales. Se respetan su monto promedio por agencia y sus castigos. La recuperación ${rm === 'pres' ? 'es la de Presidencia (hoja PROY)' : 'y la cancelación son las reales 2026 de cada agencia'}. Cada agencia coloca según lo que demostró en 2026, escalado por su equipo 2027 de Presidencia, y todas al mismo porcentaje de su capacidad; ninguna pierde clientes. Los créditos y las operaciones vigentes resultan de ese cuadre.` : `<b>Hoja + Indicadores Agencias:</b> cartera y operaciones vigentes de cada agencia de la hoja Planificación CredAgenicas 2027; créditos, monto promedio, CER > 1, CER > 30, castigos, demandados y sus recuperaciones de la hoja Indicadores Agencias. La recuperación (amortización) y los créditos cancelados son los que hacen falta para cuadrar; la recuperación de Presidencia (hoja PROY) se muestra solo como comparación.`} Recuperación de Presidencia: suma de la columna Recuperación de la hoja PROY.</div></section>`;
+      <div class="note small">${dm === 'cc' ? `<b>Cartera y clientes (Presidencia):</b> mandan la cartera y las operaciones vigentes dic-2027 de cada agencia (hoja Planificación CredAgenicas 2027). La recuperación y la cancelación son las reales 2025-2026 de cada agencia (agencias nuevas: cancelación mediana FACES). Con eso se calculan los créditos (para llegar a los clientes) y el monto promedio (para llegar a la cartera); los de Presidencia quedan como referencia. Castigos, demandados, sus recuperaciones y la mora máxima: hoja Indicadores Agencias.` : dm === 'agencia' ? `<b>Cartera de cada agencia:</b> manda la cartera dic-2027 que Presidencia fija para cada agencia. Los créditos se calculan para llegar a ella con su monto promedio, sus castigos y la recuperación ${rm === 'pres' ? 'de Presidencia (hoja PROY)' : 'real 2026 de cada agencia'}; los créditos y clientes de la hoja son referenciales. Las agencias que con esa cartera pierden clientes quedan marcadas para revisar.` : dm === 'tecnica' ? `<b>Técnica:</b> manda la cartera total de Presidencia; sus créditos y clientes son referenciales. Se respetan su monto promedio por agencia y sus castigos. La recuperación ${rm === 'pres' ? 'es la de Presidencia (hoja PROY)' : 'y la cancelación son las reales 2026 de cada agencia'}. Cada agencia coloca según lo que demostró en 2026, escalado por su equipo 2027 de Presidencia, y todas al mismo porcentaje de su capacidad; ninguna pierde clientes. Los créditos y las operaciones vigentes resultan de ese cuadre.` : `<b>Hoja + Indicadores Agencias:</b> cartera y operaciones vigentes de cada agencia de la hoja Planificación CredAgenicas 2027; créditos, monto promedio, CER > 1, CER > 30, castigos, demandados y sus recuperaciones de la hoja Indicadores Agencias. La recuperación (amortización) y los créditos cancelados son los que hacen falta para cuadrar; la recuperación de Presidencia (hoja PROY) se muestra solo como comparación.`} Recuperación de Presidencia: suma de la columna Recuperación de la hoja PROY.</div></section>`;
   }
-  return barra + tDef + tCua + tTar + tRec + tRes + tAg + tInd + reglas + tDist;
+  let tCum = '';
+  if (hayHoja && distModo() === 'cc') {
+    const L = keysPlan().filter(k => { const M = modelo(k); return M && M.P.cc; });
+    if (L.length) {
+      const R = recomendaciones(), dot = st => `<span class="sem ${st}"><i></i></span>`;
+      const fila = k => { const M = modelo(k), cu = cumpleAg(k, M), s = R.S[k], v = R.V[k];
+        return `<tr><td class="l">${esc(S.ag[k].nombre)}</td><td>${fmtN(cu.prod.n26)}</td><td><b>${fmtN(cu.prod.n)}</b></td><td>${fmtN(cu.prod.nH)}</td><td class="${cu.prod.g > 0.4 ? 'neg' : ''}">${sgnTxt(cu.prod.g)}</td><td>${fmtN(cu.prod.cpm, 1)}</td><td>${fmtN(cu.monto.m26)}</td><td><b>${fmtN(cu.monto.m)}</b></td><td>${fmtN(cu.monto.pres)}</td><td class="${Math.abs(cu.monto.d) > 0.2 ? 'neg' : ''}">${sgnTxt(cu.monto.d)}</td><td>${fmtP(cu.mora.p0)}</td><td>${cu.mora.tgt != null ? fmtP(cu.mora.tgt) : '—'}</td><td>${dot(cu.prod.st)}${dot(cu.monto.st)}${dot(cu.mora.st)}</td><td class="${s.d < -1 ? 'neg' : s.d > 1 ? 'pos' : ''}">${Math.abs(s.d) >= 1 ? (s.d > 0 ? '+' : '') + fmtN(s.d) : '—'}</td><td class="${v.d < -0.5 ? 'neg' : v.d > 0.5 ? 'pos' : ''}">${Math.abs(v.d) >= 0.5 ? (v.d > 0 ? '+' : '') + fmtN(v.d) : '—'}</td></tr>`; };
+      let rows = '';
+      [...new Set(L.map(k => S.ag[k].reg))].forEach(r => { rows += `<tr class="grp"><td colspan="15" class="l">Región ${esc(r)}</td></tr>` + L.filter(k => S.ag[k].reg === r).map(fila).join(''); });
+      const sm = f => E.sum(L.map(f)), cnt = st => L.filter(k => cumpleAg(k).peor === st).length;
+      const n = sm(k => cumpleAg(k).prod.n), n26 = sm(k => cumpleAg(k).prod.n26), nH = sm(k => cumpleAg(k).prod.nH), col = sm(k => E.sum(modelo(k).P.otm.slice(1))), col26 = sm(k => E.sum(modelo(k).F.s.otm.slice(1)));
+      rows += `<tr class="tot"><td class="l">FACES</td><td>${fmtN(n26)}</td><td><b>${fmtN(n)}</b></td><td>${fmtN(nH)}</td><td>${sgnTxt(n26 ? n / n26 - 1 : 0)}</td><td></td><td>${fmtN(n26 ? col26 / n26 : 0)}</td><td><b>${fmtN(n ? col / n : 0)}</b></td><td>${fmtN(nH ? sm(k => cumpleAg(k).prod.nH * cumpleAg(k).monto.pres) / nH : 0)}</td><td>${sgnTxt(n26 && col26 ? (col / n) / (col26 / n26) - 1 : 0)}</td><td></td><td></td><td class="l small">${cnt('verde')} · ${cnt('amar')} · ${cnt('rojo')}</td><td>${R.pendS >= 1 ? '−' + fmtN(R.pendS) : '0'}</td><td>${R.pendV >= 0.5 ? '−' + fmtN(R.pendV) : '0'}</td></tr>`;
+      tCum = `<section class="card"><div class="hd"><h2>Cumplibilidad por agencia</h2><span class="muted small">Créditos y monto que hacen falta para la cartera y los clientes de Presidencia, frente a 2026 · semáforo: productividad · monto · mora</span></div>
+        <div class="scroll"><table class="tparam"><thead><tr><th class="l">Agencia</th><th>Créditos 2026</th><th>Créditos 2027 PLAN</th><th>Créditos Presidencia</th><th>Δ % vs 2026</th><th>Por asesor al mes</th><th>Monto 2026</th><th>Monto 2027 PLAN</th><th>Monto Presidencia</th><th>Δ % vs 2026</th><th>CER > 30 dic-26</th><th>CER > 30 máx. 2027</th><th>Semáforo</th><th>Mover cartera (USD)</th><th>Mover clientes</th></tr></thead><tbody>${rows}</tbody></table></div>
+        <div class="note small">Verde: cumplible con su historia. Amarillo: exigente. Rojo: fuera de lo que la agencia ha logrado (monto más de ±35 % de su 2026, créditos más de +40 % sobre 2026 o sobre la tarifa de Presidencia +10 %, o mora que debe bajar más de 60 %). "Mover" es la recomendación para que todas queden cumplibles: negativo = cede, positivo = recibe; primero dentro de la región y sin cambiar el total FACES. En la fila FACES, lo que ninguna agencia puede recibir. Son sugerencias: no se aplican solas.</div></section>`;
+    }
+  }
+  return barra + tDef + tCua + tCum + tTar + tRec + tRes + tAg + tInd + reglas + tDist;
 }
 function vistaMetodo() {
   return `<section class="card prose"><h2>Cómo se calcula</h2>
@@ -3015,7 +3159,7 @@ document.addEventListener('click', async ev => {
   if (d.pcancel) { S.pedit = null; render(); return; }
   if (d.distmodo) {
     if (!puedePres() || !meta().crit) return;
-    const body = Object.assign({}, S.meta || {}); body.crit = Object.assign({}, body.crit || {}, {distModo: d.distmodo, distModoManual: true}); body.upd = new Date().toISOString(); body.uid = S.me.id;
+    const body = Object.assign({}, S.meta || {}); body.crit = Object.assign({}, body.crit || {}, {distModo: d.distmodo, distModoManual: 2}); body.upd = new Date().toISOString(); body.uid = S.me.id;
     S.meta = body; if (S.pedit) S.pedit.distModo = d.distmodo; S.ver++; render();
     try { await S.db.collection('meta').doc('main').set(body); toast(d.distmodo === 'hoja' ? 'Distribución: tal cual la hoja de Presidencia.' : d.distmodo === 'tecnica' ? 'Distribución técnica sobre el total FACES.' : 'Manda la cartera de cada agencia.'); } catch (e) { toast('No se pudo guardar: ' + (e.message || e.code)); }
     return;
