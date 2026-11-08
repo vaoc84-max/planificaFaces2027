@@ -166,6 +166,7 @@ input.lev-md{width:96px;text-align:right;border:2px solid var(--brand);font:700 
 .mchip{font:500 12px var(--font-body,inherit);border:1px solid var(--line);background:var(--surface);color:var(--ink-2);border-radius:999px;padding:4px 10px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
 .mchip i{width:9px;height:9px;border-radius:2px}.mchip.g{font-weight:700}.mchip.on{background:var(--ink);color:var(--surface);border-color:var(--ink)}
 input.cel{width:100%;min-width:50px;box-sizing:border-box;text-align:right;font:inherit;padding:3px 5px;border:1px solid var(--line);border-radius:5px;background:var(--surface);color:var(--ink)}input.cel.tot{min-width:62px;font-weight:600}input.cel.ov{border-color:var(--brand);background:#fff5f4}
+.aviso-man{border-left:3px solid #E4271D;background:#fdf1f0;padding:6px 10px;margin:4px 0 10px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .recbox{border:1px solid var(--line);border-radius:6px;padding:8px 12px;margin:0 0 12px;background:#fff}.rb-h{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;font-size:11.5px;margin-bottom:6px}
 .sem{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--ink-2)}.sem i{width:9px;height:9px;border-radius:50%;display:inline-block;background:#B0B0B0}.sem.verde i{background:#78A58D}.sem.amar i{background:#CCB89D}.sem.rojo i{background:#E4271D}
 .rb-t{font-size:11.5px}.rb-t ul{margin:4px 0 0;padding-left:18px}.rb-t li{margin:2px 0}.rb-t li.rojo::marker{color:#E4271D}.rb-t li.verde::marker{color:#78A58D}.rb-t li.amar::marker{color:#B0906E}
@@ -1286,8 +1287,10 @@ function planAg0(k, cpd, e, lam, _x) {
     const shape = E.sum(otn) > 0 ? otn : W12, nueva = q.F.s.otn.slice(1).filter(v => v > 0).length < 12, closeReal = p.closeRate;
     if (nueva) p.closeRate = Math.max(closeReal, closeMediana());
     const objS = +cr.saldoObj, vObj = +cr.vigObj;
-    const pmMan = Array.isArray(q.pl.promMes) && q.pl.promMes.some(v => v != null && v !== '' && isFinite(v));
-    const run = (n, f) => { p.otnAuto = E.lr(Math.max(0, Math.round(n)), shape); p.promScale = f; return E.plan2027(q.F, p, W12, q.mix, q.pl.otnMes, q.pl.promMes, q.sR); };
+    /* Con créditos escritos a mano, el monto se calcula (se ignora un monto escrito a mano) para que la cartera siempre cuadre */
+    const pmEscrito = Array.isArray(q.pl.promMes) && q.pl.promMes.some(v => v != null && v !== '' && isFinite(v));
+    const pmMan = pmEscrito && !(oT > 0), pmArr = pmMan ? q.pl.promMes : null;
+    const run = (n, f) => { p.otnAuto = E.lr(Math.max(0, Math.round(n)), shape); p.promScale = f; return E.plan2027(q.F, p, W12, q.mix, q.pl.otnMes, pmArr, q.sR); };
     if (_x && _x.nf) return run(_x.nf[0], _x.nf[1]);
     const nPorVig = v => { let lo = -1, hi = Math.max(50, E.sum(otn)); while (vigDic(q, p, E.lr(hi, shape)) < v && hi < 1e6) hi *= 2;
       while (hi - lo > 1) { const mid = Math.floor((lo + hi) / 2); if (mid >= 0 && vigDic(q, p, E.lr(mid, shape)) >= v) hi = mid; else lo = mid; } return hi; };
@@ -1301,7 +1304,7 @@ function planAg0(k, cpd, e, lam, _x) {
     else { n = nPorVig(vObj); f = fPorSal(n, objS); }
     const P = run(n, f), nP = E.sum(P.otn.slice(1));
     return Object.assign(P, {otnSug: n, otnCrit, metaSaldo: objS, vigObj: vObj, otnHoja: +cr.otn, recModo: rc.modo,
-      cc: {f, n, monto: nP ? E.sum(P.otm.slice(1)) / nP : 0, base: f > 0 && nP ? E.sum(P.otm.slice(1)) / nP / f : 0, montoPres: +cr.prom || 0, nueva, closeReal, close: p.closeRate, pmMan, man: oT > 0}});
+      cc: {f, n, monto: nP ? E.sum(P.otm.slice(1)) / nP : 0, base: f > 0 && nP ? E.sum(P.otm.slice(1)) / nP / f : 0, montoPres: +cr.prom || 0, nueva, closeReal, close: p.closeRate, pmMan, pmIgn: pmEscrito && oT > 0, man: oT > 0}});
   }
   if (cr && cr.metaHoja && +cr.saldoObj > 0 && cr.otn > 0 && !colA && distModo() === 'tecnica') {
     const shape = E.sum(otn) > 0 ? otn : W12, nueva = q.F.s.otn.slice(1).filter(v => v > 0).length < 12, closeReal = p.closeRate;
@@ -1608,6 +1611,8 @@ function avisosAg(k, M) {
       if (cu.prod.st === 'rojo') out.push({n: 'medio', p: 1, t: `Para llegar a los clientes de Presidencia coloca ${fmtN(cu.prod.n)} créditos: ${sgnTxt(cu.prod.g)} sobre 2026 (${fmtN(cu.prod.n26)}) y ${fmtN(cu.prod.cpm, 1)} por asesor al mes (Presidencia ${fmtN(cu.prod.tar, 1)}).`});
       if (cu.monto.st === 'rojo') out.push({n: 'medio', p: 1, t: `Para llegar a la cartera de Presidencia con su recuperación real, el monto promedio debe ser USD ${fmtN(cu.monto.m)}: ${sgnTxt(cu.monto.d)} frente a 2026 (USD ${fmtN(cu.monto.m26)}).`});
       if (cu.mora.st === 'rojo') out.push({n: 'medio', p: 1, t: `La mora CER > 30 debe bajar de ${fmtP(cu.mora.p0)} a ${fmtP(cu.mora.tgt)} en el año.`});
+      if (P.cc.pmIgn) out.push({n: 'medio', p: 1, t: `Tiene créditos y monto escritos a mano: para que la cartera cuadre con Presidencia se usan los créditos (${fmtN(P.cc.n)}) y el monto se calcula (USD ${fmtN(P.cc.monto)}); el monto escrito a mano no se usa. Usa "Restablecer valores" si ya no los necesitas.`});
+      if (P.cc.man || P.cc.pmMan) out.push({n: 'medio', p: 1, t: `Tiene ${P.cc.man ? 'créditos' : 'monto'} escrito${P.cc.man ? 's' : ''} a mano: la cartera cuadra con Presidencia, pero las operaciones vigentes quedan en ${fmtN(P.vgn[12])} frente a ${fmtN(P.vigObj)}.`});
       if (P.cc.nueva) out.push({n: 'info', t: `Agencia con menos de 12 meses de historia: se usa la cancelación mediana FACES (${decTxt(P.cc.close * 100, 2)} %; la suya en 2026: ${decTxt(P.cc.closeReal * 100, 2)} %).`});
     } }
   if (P.tec) { const t = P.tec, F = M.F.s, n26 = E.sum(F.otn.slice(1)), m26 = n26 ? E.sum(F.otm.slice(1)) / n26 : 0, mP = E.sum(P.otn.slice(1)) ? E.sum(P.otm.slice(1)) / E.sum(P.otn.slice(1)) : 0;
@@ -2972,12 +2977,15 @@ function vistaParametros() {
   const cast = C.cast || {};
   const tRec = `<section class="card"><div class="hd"><h2>Recuperación y castigos</h2><span class="muted small">Se aplican a todas las agencias</span></div>
     <div class="bar" style="flex-wrap:wrap;gap:10px;align-items:center"><span class="small"><b>Recuperación (amortización) 2027</b></span>
-      <div class="seg"><button class="btn ${rm === 'real' ? 'pri' : ''}" data-recmodo="real" ${puedePres() ? '' : 'disabled'}>Real 2026 de cada agencia</button><button class="btn ${rm === 'pres' ? 'pri' : ''}" data-recmodo="pres" ${puedePres() ? '' : 'disabled'}>La que calcula Presidencia (hoja PROY)</button></div></div>
+      <div class="seg"><button class="btn ${rm === 'real' && distModo() !== 'hoja' ? 'pri' : ''}" data-recmodo="real" ${puedePres() && distModo() !== 'hoja' ? '' : 'disabled'}>Real 2026 de cada agencia</button><button class="btn ${rm === 'pres' && distModo() !== 'hoja' ? 'pri' : ''}" data-recmodo="pres" ${puedePres() && distModo() !== 'hoja' ? '' : 'disabled'}>La que calcula Presidencia (hoja PROY)</button></div></div>
+    ${(() => { const L = keysPlan().filter(k => modelo(k)); if (!L.length) return ''; const sm = f => E.sum(L.map(k => f(modelo(k).P))), rec = sm(P => E.sum(P.recup.slice(1))), col = sm(P => E.sum(P.otm.slice(1))), n = sm(P => E.sum(P.otn.slice(1)));
+      const real = distModo() === 'hoja' ? E.sum(L.map(k => (modelo(k).P.hoja || {}).recReal || 0)) : null;
+      return `<div class="aviso-man small" style="border-left-color:var(--brand-2,#696667);background:#f6f6f6">${distModo() === 'hoja' ? `<span>En el modo <b>Hoja + Indicadores (todo fijo)</b> la recuperación no se elige: sale del cuadre y es <b>USD ${fmtN(rec)}</b>. Referencias: real 2026 USD ${fmtN(real)} (${sgnTxt(real ? rec / real - 1 : 0)}) · Presidencia (hoja PROY) USD ${fmtN(E.sum(ags.map(x => +x.recPres || 0)))}.</span>` : `<span>Con la recuperación elegida (FACES): recuperación <b>USD ${fmtN(rec)}</b> · colocación USD ${fmtN(col)} · ${fmtN(n)} créditos · monto promedio USD ${fmtN(n ? col / n : 0)}.${distModo() === 'cc' ? ' La cartera y los clientes no cambian porque mandan; lo que cambia es el monto (y la colocación) que hace falta para llegar a ellos.' : ''}</span>`}</div>`; })()}
     <ul class="val small" style="margin-top:8px">
       <li><b>Real 2026:</b> tasa mensual de cada agencia sobre el saldo del mes anterior (cuotas y precancelaciones de 2026), con su estacionalidad. Sube si la cartera crece.</li>
       <li><b>Presidencia:</b> el monto anual de la hoja PROY (columna Recuperación) de cada agencia, repartido en los meses con la estacionalidad de la recuperación. FACES: USD ${fmtN(E.sum(ags.map(x => +x.recPres || 0)))}.</li>
       <li><b>Castigos (Presidencia, hoja Indicadores Agencias):</b> monto ${ED ? inp('cast.m%', cast.m != null ? decTxt(cast.m * 100, 3) : '', 64, 1) : cast.m != null ? decTxt(cast.m * 100, 3) : '—'} % del saldo del mes anterior; número ${ED ? inp('cast.n%', cast.n != null ? decTxt(cast.n * 100, 3) : '', 64, 1) : cast.n != null ? decTxt(cast.n * 100, 3) : '—'} % de las operaciones vigentes, cada mes.${cast.m == null && cast.n == null ? ' Sin factores de Presidencia: se usa la tasa 2026 de cada agencia.' : ''}</li>
-      <li>Con la cartera de Presidencia como meta, el número de créditos y las operaciones vigentes se ajustan a la recuperación elegida.</li>
+      <li>${distModo() === 'cc' ? 'Con la cartera y los clientes de Presidencia como meta, el monto promedio se ajusta a la recuperación elegida; los créditos dependen de los clientes y de la cancelación.' : distModo() === 'hoja' ? 'Con todas las cifras de Presidencia fijas, la recuperación es la que hace cuadrar la cartera.' : 'Con la cartera de Presidencia como meta, el número de créditos y las operaciones vigentes se ajustan a la recuperación elegida.'}</li>
       <li><b>Crecimiento mínimo de operaciones vigentes (dic-2027 vs dic-2026):</b> <input class="lev-sm" style="width:70px" type="text" inputmode="decimal" data-meta="crecVig" value="${M.crecVig != null && M.crecVig !== '' ? decTxt(+M.crecVig * 100, 1) : ''}" placeholder="Por definir" ${puedePres() ? '' : 'disabled'}> % — lo define Presidencia; vacío no se exige. Las agencias que queden por debajo se marcan en rojo.</li>
     </ul></section>`;
   const tDist = S.me.admin ? `<section class="card"><div class="hd"><h2>Distribución a asesores</h2></div><div class="bar" style="gap:10px;align-items:center"><span class="small">${distribHabil() ? 'Habilitada: se ven las pestañas Agencia y Asesores.' : 'Pendiente hasta que Presidencia apruebe la planificación por agencia. Las pestañas Agencia y Asesores están ocultas.'}</span><button class="btn" data-distrib="${distribHabil() ? '0' : '1'}">${distribHabil() ? 'Ocultar distribución' : 'Habilitar distribución a asesores'}</button></div></section>` : '';
@@ -3004,6 +3012,7 @@ function vistaParametros() {
     tCua = `<section class="card"><div class="hd"><h2>Cuadre FACES con Presidencia</h2><span class="muted small">Total de agencias de la hoja Planificación CredAgenicas 2027</span></div>
       <div class="bar" style="flex-wrap:wrap;gap:10px;align-items:center"><span class="small"><b>Distribución por agencia</b></span>
         <div class="seg"><button class="btn ${dm === 'cc' ? 'pri' : ''}" data-distmodo="cc" ${puedePres() ? '' : 'disabled'}>Cartera y clientes (Presidencia)</button><button class="btn ${dm === 'agencia' ? 'pri' : ''}" data-distmodo="agencia" ${puedePres() ? '' : 'disabled'}>Solo cartera</button><button class="btn ${dm === 'tecnica' ? 'pri' : ''}" data-distmodo="tecnica" ${puedePres() ? '' : 'disabled'}>Técnica (total FACES)</button><button class="btn ${dm === 'hoja' ? 'pri' : ''}" data-distmodo="hoja" ${puedePres() ? '' : 'disabled'}>Hoja + Indicadores (todo fijo)</button></div></div>
+      ${(() => { const L = keysPlan().filter(editadoAg); return L.length ? `<div class="aviso-man small"><b>${L.length} agencia${L.length > 1 ? 's tienen' : ' tiene'} valores escritos a mano</b> (${L.map(k => esc(S.ag[k].nombre)).join(', ')}): ${dm === 'cc' ? 'pueden hacer que los clientes no cuadren con Presidencia.' : 'cambian el cálculo de esas agencias.'} ${puedePres() ? '<button class="btn" data-resetman="1">Borrar valores escritos a mano</button>' : ''}</div>` : ''; })()}
       <div class="scroll"><table class="tparam"><thead><tr><th class="l">Concepto</th><th>REAL / PRONÓSTICO 2026</th><th>Presidencia 2027</th><th>PLAN 2027</th><th>PLAN vs Presidencia</th></tr></thead><tbody>
       ${filas.map((f, i) => `<tr><td class="l">${i === 0 ? '<b>' + f[0] + ' · manda</b>' : (dm === 'hoja' || dm === 'cc') && /· manda/.test(f[0]) ? '<b>' + f[0] + '</b>' : f[0]}</td><td>${f[1] != null ? fmtN(f[1]) : '—'}</td><td>${f[2] != null ? fmtN(f[2]) : '—'}</td><td><b>${f[3] != null ? fmtN(f[3]) : '—'}</b></td><td>${i === 0 || ((dm === 'hoja' || dm === 'cc') && /· manda/.test(f[0])) ? dv(f[3], f[2]) : f[3] != null && f[2] ? `<span class="muted">${f[3] - f[2] >= 0 ? '+' : ''}${fmtN(f[3] - f[2])} (${sgnTxt(f[3] / f[2] - 1)})</span>` : '—'}</td></tr>`).join('')}
       </tbody></table></div>
@@ -3218,6 +3227,7 @@ document.addEventListener('click', async ev => {
   if (d.metanorm) { const g = +d.metanorm; if (isFinite(g)) guardarMeta(m => { m.g = Math.round(g * 10000) / 10000; }); return; }
   if (d.otnreset) { guardarPlan(d.agk || k, p => { p.otnMes = null; delete p.otnTot; }); return; }
   if (d.promreset) { guardarPlan(d.agk || k, p => { p.promMes = null; }); return; }
+  if (d.resetman) { const L = keysPlan().filter(editadoAg); L.forEach(j => guardarPlan(j, p => { p.otnMes = null; p.promMes = null; p.pesoMes = null; delete p.otnTot; delete p.colAse; delete p.cerFin; delete p.crecVig; })); toast(`Se borraron los valores escritos a mano en ${L.length} agencia${L.length > 1 ? 's' : ''}.`); return; }
   if (d.resetall) { guardarPlan(d.resetall, p => { p.otnMes = null; p.promMes = null; p.pesoMes = null; delete p.otnTot; delete p.colAse; delete p.cerFin; delete p.crecVig; }); toast('Se restablecieron los valores sugeridos.'); return; }
   if (d.cerreset) { guardarPlan(d.agk || k, p => { const c = Object.assign({}, p.cerFin || {}); delete c[d.cerreset]; p.cerFin = c; }); return; }
   if (d.pesoreset) { guardarPlan(d.agk || k, p => { p.pesoMes = null; }); return; }
