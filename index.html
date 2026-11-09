@@ -1118,7 +1118,9 @@ function compensacion(e) {
 /* Distribución técnica (por defecto con la hoja v2): FACES llega a la cartera total de Presidencia con la recuperación y la
    cancelación reales; cada agencia aporta según lo que ha demostrado colocar en 2026, escalado por su equipo 2027. */
 const hayInd27 = () => Object.values((meta().crit || {}).ag || {}).some(x => x && x.ind27);
-const distModo = () => { const C = meta().crit || {}, d = C.distModo; if (C.distModoManual === 2 && ['cc', 'hoja', 'tecnica', 'agencia'].includes(d)) return d; return hayInd27() ? 'cc' : d === 'hoja' || d === 'tecnica' ? d : 'agencia'; };
+/* Decisión de Víctor (8-nov-2026): cumplir tal cual las hojas Planificación CredAgenicas 2027 e Indicadores Agencias.
+   Los otros modos quedan en el código pero sin botones. */
+const distModo = () => hayInd27() ? 'hoja' : 'agencia';
 function capTecnica(k) {
   const C = meta().crit || {}, x = (C.ag || {})[k] || {}, cr = critAg(k), q = prep(k);
   const o = q.F.s.otn.slice(1), act = o.filter(v => v > 0).length, n26 = E.sum(o), n26a = act > 0 && act < 12 ? n26 * 12 / act : n26;
@@ -2056,7 +2058,7 @@ function panelAgencia(k) {
   const rev = av.filter(x => x.n === 'alto' || x.p), revisa = rev.length > 0 || editadoAg(k) || (M.P.cc && niv === 'ag' && textoRecom(k).some(x => x.n === 'rojo'));
   const abierto = (S.openEdit || {})[k] != null ? S.openEdit[k] : revisa;
   const barraProm = niv === 'ag' ? `<details class="editbox${revisa ? '' : ' ok'}" data-desp="edit" data-agk="${k}" ${abierto ? 'open' : ''}>
-      <summary class="eb-h"><b>Parámetros editables</b>${revisa ? `<span class="pill rev">Revisar: ${rev.length ? rev.length + ' aviso' + (rev.length > 1 ? 's' : '') : ''}${rev.length && editadoAg(k) ? ' · ' : ''}${editadoAg(k) ? 'valores escritos a mano' : ''}</span>` : '<span class="pill ok">Sin observaciones: no requiere cambios</span>'}${pres.ok ? `<span class="pill ok">Agencia aprobada</span><span class="small">Para cambiar valores, primero reábrela.</span>${puedePres() ? `<button class="btn" data-presok="0">Reabrir parámetros</button>` : ''}` : !puedePres() ? `<span class="muted small">${S.readonly ? 'Modo solo lectura: no se pueden guardar cambios.' : 'Solo Presidencia, Gerencia o el administrador pueden cambiar estos valores.'}</span>` : `<span class="muted small">${abierto ? 'Las casillas resaltadas se pueden cambiar; si las borras vuelven al valor calculado.' : 'Clic para ver o cambiar los valores calculados.'}</span>`}${ed && hayEd ? '<button class="btn" data-resetall="' + k + '">Restablecer valores</button>' : ''}</summary>
+      <summary class="eb-h"><b>Parámetros editables</b>${revisa ? `<span class="pill rev">Revisar: ${rev.length ? rev.length + ' aviso' + (rev.length > 1 ? 's' : '') : ''}${rev.length && editadoAg(k) ? ' · ' : ''}${editadoAg(k) ? 'valores escritos a mano' : ''}</span>` : '<span class="pill ok">Sin observaciones: no requiere cambios</span>'}${puedePres() ? `<label class="small" style="display:inline-flex;gap:4px;align-items:center"><input type="checkbox" data-destacar="${k}" ${destacadas().includes(k) ? 'checked' : ''}> Destacar en el consolidado</label>` : ''}${pres.ok ? `<span class="pill ok">Agencia aprobada</span><span class="small">Para cambiar valores, primero reábrela.</span>${puedePres() ? `<button class="btn" data-presok="0">Reabrir parámetros</button>` : ''}` : !puedePres() ? `<span class="muted small">${S.readonly ? 'Modo solo lectura: no se pueden guardar cambios.' : 'Solo Presidencia, Gerencia o el administrador pueden cambiar estos valores.'}</span>` : `<span class="muted small">${abierto ? 'Las casillas resaltadas se pueden cambiar; si las borras vuelven al valor calculado.' : 'Clic para ver o cambiar los valores calculados.'}</span>`}${ed && hayEd ? '<button class="btn" data-resetall="' + k + '">Restablecer valores</button>' : ''}</summary>
       ${rev.length ? `<ul class="val small eb-rev">${rev.map(x => `<li class="${x.n === 'alto' ? 'flag' : ''}">${esc(x.t)}</li>`).join('')}</ul>` : ''}
       ${M.P.cc ? (() => { const cu = cumpleAg(k, M), rc = textoRecom(k); if (!cu) return '';
         const chip = (lb, st, txt) => `<span class="sem ${st}"><i></i><b>${lb}</b> ${txt}</span>`;
@@ -3011,8 +3013,7 @@ function vistaParametros() {
       ['Demandados 2027 (USD)', null, sm(x => x.ind27 && x.ind27.dem || 0) || null, okP ? sm(x => x.pl.dem) : null]];
     const dv = (a, b) => a != null && b && Math.abs(a / b - 1) < 0.0001 ? `<span class="muted">${Math.round(a - b) === 0 ? 'Cuadra' : (a - b >= 0 ? '+' : '') + fmtN(a - b) + ' (redondeo de créditos)'}</span>` : a != null && b ? `<span class="${a - b >= -0.5 ? 'pos' : 'neg'}">${a - b >= 0 ? '+' : ''}${fmtN(a - b)} (${sgnTxt(a / b - 1)})</span>` : '—';
     tCua = `<section class="card"><div class="hd"><h2>Cuadre FACES con Presidencia</h2><span class="muted small">Total de agencias de la hoja Planificación CredAgenicas 2027</span></div>
-      <div class="bar" style="flex-wrap:wrap;gap:10px;align-items:center"><span class="small"><b>Distribución por agencia</b></span>
-        <div class="seg"><button class="btn ${dm === 'cc' ? 'pri' : ''}" data-distmodo="cc" ${puedePres() ? '' : 'disabled'}>Cartera y clientes (Presidencia)</button><button class="btn ${dm === 'agencia' ? 'pri' : ''}" data-distmodo="agencia" ${puedePres() ? '' : 'disabled'}>Solo cartera</button><button class="btn ${dm === 'tecnica' ? 'pri' : ''}" data-distmodo="tecnica" ${puedePres() ? '' : 'disabled'}>Técnica (total FACES)</button><button class="btn ${dm === 'hoja' ? 'pri' : ''}" data-distmodo="hoja" ${puedePres() ? '' : 'disabled'}>Hoja + Indicadores (todo fijo)</button></div></div>
+      <div class="bar" style="flex-wrap:wrap;gap:10px;align-items:center"><span class="small"><b>Se cumplen tal cual las hojas "Planificación CredAgenicas 2027" e "Indicadores Agencias" de Presidencia.</b></span></div>
       ${(() => { const L = keysPlan().filter(editadoAg); return L.length ? `<div class="aviso-man small"><b>${L.length} agencia${L.length > 1 ? 's tienen' : ' tiene'} valores escritos a mano</b> (${L.map(k => esc(S.ag[k].nombre)).join(', ')}): ${dm === 'cc' ? 'pueden hacer que los clientes no cuadren con Presidencia.' : 'cambian el cálculo de esas agencias.'} ${puedePres() ? '<button class="btn" data-resetman="1">Borrar valores escritos a mano</button>' : ''}</div>` : ''; })()}
       <div class="scroll"><table class="tparam"><thead><tr><th class="l">Concepto</th><th>REAL / PRONÓSTICO 2026</th><th>Presidencia 2027</th><th>PLAN 2027</th><th>PLAN vs Presidencia</th></tr></thead><tbody>
       ${filas.map((f, i) => `<tr><td class="l">${i === 0 ? '<b>' + f[0] + ' · manda</b>' : (dm === 'hoja' || dm === 'cc') && /· manda/.test(f[0]) ? '<b>' + f[0] + '</b>' : f[0]}</td><td>${f[1] != null ? fmtN(f[1]) : '—'}</td><td>${f[2] != null ? fmtN(f[2]) : '—'}</td><td><b>${f[3] != null ? fmtN(f[3]) : '—'}</b></td><td>${i === 0 || ((dm === 'hoja' || dm === 'cc') && /· manda/.test(f[0])) ? dv(f[3], f[2]) : f[3] != null && f[2] ? `<span class="muted">${f[3] - f[2] >= 0 ? '+' : ''}${fmtN(f[3] - f[2])} (${sgnTxt(f[3] / f[2] - 1)})</span>` : '—'}</td></tr>`).join('')}
@@ -3087,34 +3088,60 @@ function guardarMeta(mut) {
 }
 
 /* ---------------- descargas xlsx ---------------- */
-function hojaAnexo(titulo, meta, P, h25, h26, nAses) {
-  const aoa = [];
-  aoa.push([`PLANIFICACION Y RESULTADOS DEL MANEJO DE CARTERA PERIODO Enero / 27 - Diciembre / 27 DE FACES`]);
-  aoa.push([]);
-  meta.forEach(m => aoa.push(m));
-  aoa.push([]);
-  const hdr = ['INDICADORES', 'Resultados Diciemb / 25', `Resultados Diciemb / 26${h26 && h26._p ? ' (pronóstico)' : ''}`, ...MESL, 'TOTAL ANUAL']; if (nAses) hdr.push('Promedio / Asesor');
-  aoa.push(hdr);
-  const r0 = aoa.length;
-  ROWS.forEach(([k, l, t, mode]) => {
-    const tot = totalRow(P, k, mode);
-    const row = [l, h25 ? (h25[k] ?? '') : '', h26 ? (h26[k] ?? '') : '', ...P[k].slice(1).map(v => t === '%' ? v : (t === 'n' ? Math.round(v) : E.r2(v))), t === '%' ? tot : (t === 'n' ? Math.round(tot) : E.r2(tot))];
-    if (nAses) row.push(t === '%' || ['mmin','mmax','prom'].includes(k) ? tot : E.r2(tot / nAses));
-    aoa.push(row);
+/* Anexo 5 en Excel con formato (ExcelJS): mismas filas resaltadas que en la plataforma y paleta FACES 2026 */
+function hojaAnexo(titulo, meta, P, h25, h26, nAses, opt) { return {titulo, meta, P, h26, nAses, palOtn: !!(opt && opt.palOtn)}; }
+const libroNuevo = () => ({hojas: []});
+/* Agencias destacadas en el consolidado (pestaña roja); por defecto las que Víctor marcó el 9-nov-2026 */
+const destacadas = () => { const d = (meta().crit || {}).destacar; return Array.isArray(d) ? d : ['flavio-alfaro', 'celica']; };
+const agregarHoja = (wb, spec, nombre) => { wb.hojas.push(Object.assign({}, spec, {nombre})); };
+let _exceljs = null;
+function cargarExcelJS() {
+  if (window.ExcelJS) return Promise.resolve(window.ExcelJS);
+  if (_exceljs) return _exceljs;
+  return (_exceljs = new Promise((ok, mal) => { const sc = document.createElement('script'); sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js'; sc.onload = () => ok(window.ExcelJS); sc.onerror = () => { _exceljs = null; mal(new Error('No se pudo cargar el generador de Excel')); }; document.head.appendChild(sc); }));
+}
+async function escribirLibro(wb) {
+  const X = await cargarExcelJS(), book = new X.Workbook();
+  book.creator = 'PLANIFICA 2027 · FACES';
+  const ROJO = 'FFE4271D', GRIS = 'FF696667', GRIS_L = 'FFDADADA', BASE = 'FFF5F1EB', BASE_F = 'FFEBE3D8', PAL = 'FFE4EEE8', FRA = 'FFE9F1EC', VERDE = 'FF78A58D';
+  const fnt = (o) => Object.assign({name: 'Lato', size: 10, color: {argb: 'FF333333'}}, o || {});
+  const fill = c => ({type: 'pattern', pattern: 'solid', fgColor: {argb: c}});
+  wb.hojas.forEach(h => {
+    const ws = book.addWorksheet(h.nombre, {...(h.rojo ? {properties: {tabColor: {argb: 'FFC00000'}}} : {}), views: [{state: 'frozen', xSplit: 1, ySplit: h.meta.length + 5, showGridLines: false}]});
+    const nCol = 1 + 1 + 12 + 1 + (h.nAses ? 1 : 0);
+    ws.columns = [{width: 40}, {width: 16}, ...MESL.map(() => ({width: 13})), {width: 16}, ...(h.nAses ? [{width: 19}] : [])];
+    const t = ws.addRow(['PLANIFICACIÓN Y RESULTADOS DEL MANEJO DE CARTERA · ENERO A DICIEMBRE 2027 · ' + h.titulo]);
+    t.font = fnt({size: 13, bold: true, color: {argb: ROJO}}); t.height = 22;
+    ws.addRow([]);
+    h.meta.forEach(m => { const r = ws.addRow([m[0], m[1]]); r.getCell(1).font = fnt({bold: true, color: {argb: GRIS}}); r.getCell(2).font = fnt(); r.getCell(2).alignment = {horizontal: 'left'}; ws.mergeCells(r.number, 2, r.number, Math.min(nCol, 8)); });
+    ws.addRow([]);
+    const p26 = h.h26 && h.h26._p, lab26 = h.h26 && h.h26._ini ? 'INICIO' : p26 ? 'PROY. DIC/26' : 'REAL DIC/26';
+    const h1 = ws.addRow(['INDICADORES', lab26, ...MESL, 'TOTAL ANUAL', ...(h.nAses ? ['PROMEDIO / ASESOR'] : [])]);
+    const h2 = ws.addRow(['', p26 ? 'PRONÓSTICO' : 'REAL', ...MESL.map(() => 'PLAN'), 'PLAN', ...(h.nAses ? ['PLAN'] : [])]);
+    [h1, h2].forEach((r, i) => { r.eachCell({includeEmpty: true}, (c, col) => { if (col > nCol) return; c.fill = fill(GRIS); c.font = fnt({bold: i === 0, size: i === 0 ? 10 : 8, color: {argb: 'FFFFFFFF'}}); c.alignment = {horizontal: col === 1 ? 'left' : 'right', vertical: 'middle'}; }); });
+    h1.getCell(2).fill = fill('FF8A8687'); h2.getCell(2).fill = fill('FF8A8687');
+    ROWS.forEach(([k, l, ty, mode]) => {
+      const P = h.P, tot = totalRow(P, k, mode), v = x => x == null || x === '' ? null : ty === 'n' ? Math.round(+x) : ty === '%' ? +x : E.r2(+x);
+      const pa = h.nAses ? (ty === '%' || ['mmin', 'mmax', 'prom'].includes(k) ? tot : tot / h.nAses) : null;
+      const r = ws.addRow([l.replace(/\s+/g, ' ').trim(), v(h.h26 && h.h26[k]), ...P[k].slice(1).map(v), v(tot), ...(h.nAses ? [v(pa)] : [])]);
+      const cls = FILAS_BASE.includes(k) ? 'base' : (k === 'prom' || (k === 'otn' && h.palOtn)) ? 'pal' : k === 'recup' ? 'fra' : '';
+      const fmt = ty === '%' ? '0.00%' : ty === 'n' ? '#,##0' : '#,##0';
+      r.eachCell({includeEmpty: true}, (c, col) => {
+        if (col > nCol) return;
+        c.font = fnt({bold: cls === 'pal' || cls === 'fra' || col === nCol - (h.nAses ? 1 : 0)});
+        if (col > 1) { c.numFmt = fmt; c.alignment = {horizontal: 'right'}; }
+        const bg = cls === 'base' ? BASE : cls === 'pal' ? PAL : cls === 'fra' ? FRA : null;
+        if (bg) c.fill = fill(bg);
+        if (col === 2) { c.fill = fill(BASE_F); c.font = fnt({bold: true}); }
+        c.border = cls === 'fra' ? {top: {style: 'medium', color: {argb: VERDE}}, bottom: {style: 'medium', color: {argb: VERDE}}} : {bottom: {style: 'thin', color: {argb: GRIS_L}}};
+      });
+    });
+    ws.addRow([]);
+    const n = ws.addRow(['Filas en beige: cartera y clientes (base). En verde: palancas del plan (créditos y monto promedio). Franja verde: recuperación. Columna PROY. DIC/26: pronóstico de cierre 2026.']);
+    n.getCell(1).font = fnt({size: 8, italic: true, color: {argb: GRIS}});
+    ws.pageSetup = {orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0, paperSize: 9};
   });
-  aoa.push([]);
-  aoa.push(['COLOCACIÓN POR TIPO DE CARTERA (USD)', '', '', ...MESL, 'TOTAL ANUAL']);
-  Object.keys(P.cat).forEach(c => aoa.push([CATS[c], '', '', ...P.cat[c].slice(1), E.r2(E.sum(P.cat[c].slice(1)))]));
-  aoa.push(['Total colocación', '', '', ...P.otm.slice(1), E.r2(E.sum(P.otm.slice(1)))]);
-  const ws = XLSX.utils.aoa_to_sheet(aoa);
-  // formatos
-  ROWS.forEach(([k, l, t], i) => {
-    const r = r0 + i;
-    for (let c = 1; c < hdr.length; c++) { const ref = XLSX.utils.encode_cell({r, c}); if (ws[ref] && typeof ws[ref].v === 'number') ws[ref].z = t === '%' ? '0.00%' : t === 'n' ? '#,##0' : '#,##0.00'; }
-  });
-  for (let r = r0 + ROWS.length + 1; r < aoa.length; r++) for (let c = 3; c < 16; c++) { const ref = XLSX.utils.encode_cell({r, c}); if (ws[ref] && typeof ws[ref].v === 'number') ws[ref].z = '#,##0.00'; }
-  ws['!cols'] = [{wch: 38}, {wch: 16}, {wch: 18}, ...MESL.map(() => ({wch: 13})), {wch: 15}, {wch: 15}];
-  return ws;
+  return await book.xlsx.writeBuffer();
 }
 function metaBase(a, extra) {
   const k = slug(a.nombre), e = estadoIdx(k), pl = S.planes[k] || {};
@@ -3128,38 +3155,57 @@ async function descargar(tipo, id) {
     const vis = visibles(), keys = vis.map(v => v[0]), T = sumaModelos(keys);
     const todo = vis.length === Object.keys(S.ag).length;
     const hayP = keys.some(k => (modelo(k) || {F: {last: 12}}).F.last < 12);
-    const wb = XLSX.utils.book_new(), M = meta();
+    const wb = libroNuevo(), M = meta();
     const metaF = [['ALCANCE', todo ? 'FACES' : 'Agencias de tu alcance'], ['AGENCIAS', keys.length], ['ASESORES DE CREDITO', T.nAses], ['FECHA DE ELABORACION', new Date().toISOString().slice(0, 10)]];
-    XLSX.utils.book_append_sheet(wb, hojaAnexo('FACES', metaF, T.P, T.y25 ? histCol(T.y25, false) : null, histCol(T.F, hayP), T.nAses), todo ? 'FACES' : 'Consolidado');
-    keys.forEach(k => { const a = S.ag[k], Mo = modelo(k); if (!Mo) return; XLSX.utils.book_append_sheet(wb, hojaAnexo(a.nombre, metaBase(a, [['ASESORES DE CREDITO', Mo.ases.length], ['JEFE DE AGENCIA', a.jefe || '']]), Mo.P, histCol(E.serie(a.hist, '2025'), false), histCol(Mo.F.s, Mo.F.last < 12), Mo.ases.length), hojaNombre(a.nombre)); });
-    const buf = XLSX.write(wb, {type: 'array', bookType: 'xlsx'});
+    agregarHoja(wb, hojaAnexo('FACES', metaF, T.P, T.y25 ? histCol(T.y25, false) : null, histCol(T.F, hayP), T.nAses), todo ? 'FACES' : 'Consolidado');
+    /* Una hoja por región, una por zona y una por agencia (mismo formato Anexo 5) */
+    const usadas = new Set([todo ? 'FACES' : 'Consolidado']), nom = t => { let n = hojaNombre(t); while (usadas.has(n)) n = hojaNombre(t).slice(0, 28) + ' ' + (usadas.size); usadas.add(n); return n; };
+    const grupo = (titulo, alcance, ks) => { const G = sumaModelos(ks), hp = ks.some(k => (modelo(k) || {F: {last: 12}}).F.last < 12);
+      const m = [['ALCANCE', alcance], ['AGENCIAS', ks.map(k => S.ag[k].nombre).join(', ')], ['ASESORES DE CREDITO', G.nAses], ['FECHA DE ELABORACION', new Date().toISOString().slice(0, 10)]];
+      agregarHoja(wb, hojaAnexo(titulo, m, G.P, G.y25 ? histCol(G.y25, false) : null, histCol(G.F, hp), G.nAses), nom(titulo)); };
+    /* orden jerárquico: FACES › región › zona › sus agencias; pestaña roja para las agencias destacadas */
+    const okK = keys.filter(k => modelo(k)), regs = [...new Set(okK.map(k => S.ag[k].reg))], dest = destacadas();
+    regs.forEach(r => {
+      grupo('REGION ' + r, 'REGION ' + r, okK.filter(k => S.ag[k].reg === r));
+      [...new Set(okK.filter(k => S.ag[k].reg === r).map(k => S.ag[k].zona))].forEach(z => {
+        const kz = okK.filter(k => S.ag[k].reg === r && S.ag[k].zona === z);
+        grupo(/^ZONA/i.test(z) ? z : 'Zona ' + z, `REGION ${r} · ${/^ZONA/i.test(z) ? z : 'ZONA ' + z}`, kz);
+        kz.forEach(k => { const a = S.ag[k], Mo = modelo(k); agregarHoja(wb, Object.assign(hojaAnexo(a.nombre, metaBase(a, [['ASESORES DE CREDITO', Mo.ases.length], ['JEFE DE AGENCIA', a.jefe || '']]), Mo.P, null, histCol(Mo.F.s, Mo.F.last < 12), Mo.ases.length, {palOtn: true}), {rojo: dest.includes(k)}), nom(a.nombre)); });
+      });
+    });
+    let buf; try { buf = await escribirLibro(wb); } catch (e) { toast('No se pudo generar el Excel: ' + (e.message || e)); return; }
     try { await S.dl.save({filename: `Planificacion_2027_${todo ? 'FACES' : 'consolidado'}.xlsx`, data: new Blob([buf])}); toast('Archivo descargado.'); }
     catch (e) { if (e.code !== 'declined') toast('No se pudo descargar en esta vista.'); }
     return;
   }
   const k = S.sel, a = S.ag[k], M = modelo(k); if (!M) return;
-  const wb = XLSX.utils.book_new(); let fname;
+  const wb = libroNuevo(); let fname;
   const h25 = histCol(E.serie(a.hist, '2025'), false), h26 = histCol(M.F.s, M.F.last < 12);
   const asesorHoja = x => hojaAnexo(x.n, metaBase(a, [['ASESOR DE CREDITO', x.n], ['CATEGORIA', x.categ], ['PESO EN LA AGENCIA', +(x.pesoEf * 100).toFixed(2) + ' %']]), x.R, null, inicioCol(x.R, M.F.last < 12 && !x.real), 0);
   if (tipo === 'agencia') {
-    XLSX.utils.book_append_sheet(wb, hojaAnexo(a.nombre, metaBase(a, [['ASESORES DE CREDITO', M.ases.length], ['JEFE DE AGENCIA', a.jefe || '']]), M.P, h25, h26, M.ases.length), hojaNombre('Agencia ' + a.nombre));
+    agregarHoja(wb, hojaAnexo(a.nombre, metaBase(a, [['ASESORES DE CREDITO', M.ases.length], ['JEFE DE AGENCIA', a.jefe || '']]), M.P, null, h26, M.ases.length, {palOtn: true}), hojaNombre('Agencia ' + a.nombre));
     fname = `Planificacion_2027_${a.nombre}.xlsx`;
   } else if (tipo === 'todos') {
-    XLSX.utils.book_append_sheet(wb, hojaAnexo(a.nombre, metaBase(a, [['ASESORES DE CREDITO', M.ases.length], ['JEFE DE AGENCIA', a.jefe || '']]), M.P, h25, h26, M.ases.length), hojaNombre('Agencia ' + a.nombre));
+    agregarHoja(wb, hojaAnexo(a.nombre, metaBase(a, [['ASESORES DE CREDITO', M.ases.length], ['JEFE DE AGENCIA', a.jefe || '']]), M.P, null, h26, M.ases.length, {palOtn: true}), hojaNombre('Agencia ' + a.nombre));
     const used = new Set();
-    M.ases.forEach(x => { let nm = hojaNombre(x.n); while (used.has(nm)) nm = nm.slice(0, 29) + used.size; used.add(nm); XLSX.utils.book_append_sheet(wb, asesorHoja(x), nm); });
+    M.ases.forEach(x => { let nm = hojaNombre(x.n); while (used.has(nm)) nm = nm.slice(0, 29) + used.size; used.add(nm); agregarHoja(wb, asesorHoja(x), nm); });
     fname = `Planificacion_2027_${a.nombre}_asesores.xlsx`;
   } else {
     const x = M.ases.find(z => z.id === id); if (!x) return;
-    XLSX.utils.book_append_sheet(wb, asesorHoja(x), hojaNombre(x.n));
+    agregarHoja(wb, asesorHoja(x), hojaNombre(x.n));
     fname = `Planificacion_2027_${x.n}.xlsx`;
   }
-  const buf = XLSX.write(wb, {type: 'array', bookType: 'xlsx'});
+  let buf; try { buf = await escribirLibro(wb); } catch (e) { toast('No se pudo generar el Excel: ' + (e.message || e)); return; }
   try { await S.dl.save({filename: fname, data: new Blob([buf])}); toast('Archivo descargado.'); }
   catch (e) { if (e.code !== 'declined') toast(e.code === 'rate_limited' ? 'Hay una descarga pendiente; espera un momento.' : 'No se pudo descargar en esta vista.'); }
 }
 
 /* ---------------- eventos ---------------- */
+document.addEventListener('change', ev => {
+  const t = ev.target; if (!t || !t.dataset || !t.dataset.destacar || !puedePres()) return;
+  const kk = t.dataset.destacar, on = t.checked;
+  guardarMeta(m => { m.crit = m.crit || {}; const L = Array.isArray(m.crit.destacar) ? m.crit.destacar.slice() : ['flavio-alfaro', 'celica']; const i = L.indexOf(kk); if (on && i < 0) L.push(kk); if (!on && i >= 0) L.splice(i, 1); m.crit.destacar = L; });
+});
 document.addEventListener('click', async ev => {
   const t = ev.target.closest('button,[data-go],[data-tab],tr[data-psel]'); if (!t) return;
   const d = t.dataset;
