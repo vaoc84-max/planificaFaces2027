@@ -1118,9 +1118,7 @@ function compensacion(e) {
 /* Distribución técnica (por defecto con la hoja v2): FACES llega a la cartera total de Presidencia con la recuperación y la
    cancelación reales; cada agencia aporta según lo que ha demostrado colocar en 2026, escalado por su equipo 2027. */
 const hayInd27 = () => Object.values((meta().crit || {}).ag || {}).some(x => x && x.ind27);
-/* Decisión de Víctor (8-nov-2026): cumplir tal cual las hojas Planificación CredAgenicas 2027 e Indicadores Agencias.
-   Los otros modos quedan en el código pero sin botones. */
-const distModo = () => hayInd27() ? 'hoja' : 'agencia';
+const distModo = () => { const C = meta().crit || {}, d = C.distModo; if (C.distModoManual === 2 && ['cc', 'hoja', 'tecnica', 'agencia'].includes(d)) return d; return hayInd27() ? 'cc' : d === 'hoja' || d === 'tecnica' ? d : 'agencia'; };
 function capTecnica(k) {
   const C = meta().crit || {}, x = (C.ag || {})[k] || {}, cr = critAg(k), q = prep(k);
   const o = q.F.s.otn.slice(1), act = o.filter(v => v > 0).length, n26 = E.sum(o), n26a = act > 0 && act < 12 ? n26 * 12 / act : n26;
@@ -3013,7 +3011,8 @@ function vistaParametros() {
       ['Demandados 2027 (USD)', null, sm(x => x.ind27 && x.ind27.dem || 0) || null, okP ? sm(x => x.pl.dem) : null]];
     const dv = (a, b) => a != null && b && Math.abs(a / b - 1) < 0.0001 ? `<span class="muted">${Math.round(a - b) === 0 ? 'Cuadra' : (a - b >= 0 ? '+' : '') + fmtN(a - b) + ' (redondeo de créditos)'}</span>` : a != null && b ? `<span class="${a - b >= -0.5 ? 'pos' : 'neg'}">${a - b >= 0 ? '+' : ''}${fmtN(a - b)} (${sgnTxt(a / b - 1)})</span>` : '—';
     tCua = `<section class="card"><div class="hd"><h2>Cuadre FACES con Presidencia</h2><span class="muted small">Total de agencias de la hoja Planificación CredAgenicas 2027</span></div>
-      <div class="bar" style="flex-wrap:wrap;gap:10px;align-items:center"><span class="small"><b>Se cumplen tal cual las hojas "Planificación CredAgenicas 2027" e "Indicadores Agencias" de Presidencia.</b></span></div>
+      <div class="bar" style="flex-wrap:wrap;gap:10px;align-items:center"><span class="small"><b>Distribución por agencia</b></span>
+        <div class="seg"><button class="btn ${dm === 'cc' ? 'pri' : ''}" data-distmodo="cc" ${puedePres() ? '' : 'disabled'}>Cartera y clientes (Presidencia)</button><button class="btn ${dm === 'agencia' ? 'pri' : ''}" data-distmodo="agencia" ${puedePres() ? '' : 'disabled'}>Solo cartera</button><button class="btn ${dm === 'tecnica' ? 'pri' : ''}" data-distmodo="tecnica" ${puedePres() ? '' : 'disabled'}>Técnica (total FACES)</button><button class="btn ${dm === 'hoja' ? 'pri' : ''}" data-distmodo="hoja" ${puedePres() ? '' : 'disabled'}>Hoja + Indicadores (todo fijo)</button></div></div>
       ${(() => { const L = keysPlan().filter(editadoAg); return L.length ? `<div class="aviso-man small"><b>${L.length} agencia${L.length > 1 ? 's tienen' : ' tiene'} valores escritos a mano</b> (${L.map(k => esc(S.ag[k].nombre)).join(', ')}): ${dm === 'cc' ? 'pueden hacer que los clientes no cuadren con Presidencia.' : 'cambian el cálculo de esas agencias.'} ${puedePres() ? '<button class="btn" data-resetman="1">Borrar valores escritos a mano</button>' : ''}</div>` : ''; })()}
       <div class="scroll"><table class="tparam"><thead><tr><th class="l">Concepto</th><th>REAL / PRONÓSTICO 2026</th><th>Presidencia 2027</th><th>PLAN 2027</th><th>PLAN vs Presidencia</th></tr></thead><tbody>
       ${filas.map((f, i) => `<tr><td class="l">${i === 0 ? '<b>' + f[0] + ' · manda</b>' : (dm === 'hoja' || dm === 'cc') && /· manda/.test(f[0]) ? '<b>' + f[0] + '</b>' : f[0]}</td><td>${f[1] != null ? fmtN(f[1]) : '—'}</td><td>${f[2] != null ? fmtN(f[2]) : '—'}</td><td><b>${f[3] != null ? fmtN(f[3]) : '—'}</b></td><td>${i === 0 || ((dm === 'hoja' || dm === 'cc') && /· manda/.test(f[0])) ? dv(f[3], f[2]) : f[3] != null && f[2] ? `<span class="muted">${f[3] - f[2] >= 0 ? '+' : ''}${fmtN(f[3] - f[2])} (${sgnTxt(f[3] / f[2] - 1)})</span>` : '—'}</td></tr>`).join('')}
