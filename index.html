@@ -3100,6 +3100,143 @@ function cargarExcelJS() {
   if (_exceljs) return _exceljs;
   return (_exceljs = new Promise((ok, mal) => { const sc = document.createElement('script'); sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js'; sc.onload = () => ok(window.ExcelJS); sc.onerror = () => { _exceljs = null; mal(new Error('No se pudo cargar el generador de Excel')); }; document.head.appendChild(sc); }));
 }
+/* Consolidado con fórmulas: en cada agencia, supuestos (amarillo) y factores mueven todo lo que depende de ellos;
+   zonas, regiones y FACES suman sus agencias con fórmulas. Al abrir, reproduce exactamente la planificación. */
+async function escribirLibroModelo(wb) {
+  const X = await cargarExcelJS(), book = new X.Workbook();
+  book.creator = 'PLANIFICA 2027 · FACES'; book.calcProperties = {fullCalcOnLoad: true};
+  const ROJO = 'FFE4271D', GRIS = 'FF696667', GRIS_L = 'FFDADADA', BASE = 'FFF5F1EB', BASE_F = 'FFEBE3D8', PAL = 'FFE4EEE8', FRA = 'FFE9F1EC', VERDE = 'FF78A58D', AMA = 'FFFFF2CC';
+  const fnt = o => Object.assign({name: 'Lato', size: 10, color: {argb: 'FF333333'}}, o || {});
+  const fill = c => ({type: 'pattern', pattern: 'solid', fgColor: {argb: c}});
+  const L = n => { let s = ''; while (n > 0) { const m = (n - 1) % 26; s = String.fromCharCode(65 + m) + s; n = Math.floor((n - 1) / 26); } return s; };
+  const q = n => `'${n.replace(/'/g, "''")}'`;
+  const MC = i => L(3 + i);            // columna del mes i (0..11): C..N
+  const CT = 'O', CP = 'P';            // total anual, promedio por asesor
+  const nAgSheet = {}; wb.hojas.forEach(h => { if (h.tipo === 'ag') nAgSheet[h.k] = h.nombre; });
+  const facesH = wb.hojas.find(h => h.faces);
+  const sheets = {}; wb.hojas.forEach(h => { sheets[h.nombre] = book.addWorksheet(h.nombre, {...(h.rojo ? {properties: {tabColor: {argb: 'FFC00000'}}} : {}), views: [{state: 'frozen', xSplit: 1, ySplit: 15, showGridLines: false}]}); });
+  const KS = ROWS.map(r => r[0]), TY = Object.fromEntries(ROWS.map(r => [r[0], r[2]])), MODE = Object.fromEntries(ROWS.map(r => [r[0], r[3]]));
+  const R0 = 16; const rowOf = {}; KS.forEach((k, i) => rowOf[k] = R0 + i);   // misma fila en todas las hojas
+  const SUP0 = R0 + KS.length + 2, SUPK = ['otn', 'prom', 'pc1', 'pc15', 'pc30', 'tRec', 'tCan'];
+  const supRow = {}; SUPK.forEach((k, i) => supRow[k] = SUP0 + 1 + i);
+  const FAC0 = SUP0 + SUPK.length + 2, FACK = ['fC', 'fM', 'fR', 'fK', 'fE'];
+  const facRow = {}; FACK.forEach((k, i) => facRow[k] = FAC0 + 1 + i);
+  const FACL = {fC: 'Factor créditos otorgados', fM: 'Factor monto promedio', fR: 'Factor recuperación', fK: 'Factor cancelación', fE: 'Factor mora (CER)'};
+  const SUPL = {otn: 'Créditos otorgados (supuesto)', prom: 'Monto promedio (supuesto)', pc1: '% CER > 1 (supuesto)', pc15: '% CER > 15 (supuesto)', pc30: '% CER > 30 (supuesto)', tRec: 'Tasa de recuperación (% de la cartera del mes anterior)', tCan: 'Tasa de cancelación (% de los clientes del mes anterior)'};
+  const facG = k => facesH ? `${q(facesH.nombre)}!$B$${facRow[k]}` : '1';
+  const div = (a, b) => b ? a / b : 0;
+
+  const encabezado = (ws, h) => {
+    ws.columns = [{width: 46}, {width: 16}, ...MESL.map(() => ({width: 13})), {width: 16}, {width: 19}];
+    const t = ws.getRow(1); t.getCell(1).value = 'PLANIFICACIÓN Y RESULTADOS DEL MANEJO DE CARTERA · ENERO A DICIEMBRE 2027 · ' + h.titulo; t.getCell(1).font = fnt({size: 13, bold: true, color: {argb: ROJO}}); t.height = 22;
+    h.meta.slice(0, 10).forEach((m, i) => { const r = ws.getRow(3 + i); r.getCell(1).value = m[0]; r.getCell(2).value = m[1]; r.getCell(1).font = fnt({bold: true, color: {argb: GRIS}}); r.getCell(2).font = fnt(); r.getCell(2).alignment = {horizontal: 'left'}; ws.mergeCells(3 + i, 2, 3 + i, 8); });
+    const p26 = h.h26 && h.h26._p;
+    const h1 = ws.getRow(14), h2 = ws.getRow(15);
+    ['INDICADORES', p26 ? 'PROY. DIC/26' : 'REAL DIC/26', ...MESL, 'TOTAL ANUAL', 'PROMEDIO / ASESOR'].forEach((v, i) => h1.getCell(i + 1).value = v);
+    ['', p26 ? 'PRONÓSTICO' : 'REAL', ...MESL.map(() => 'PLAN'), 'PLAN', 'PLAN'].forEach((v, i) => h2.getCell(i + 1).value = v);
+    [h1, h2].forEach((r, j) => { for (let c = 1; c <= 16; c++) { const x = r.getCell(c); x.fill = fill(c === 2 ? 'FF8A8687' : GRIS); x.font = fnt({bold: j === 0, size: j === 0 ? 10 : 8, color: {argb: 'FFFFFFFF'}}); x.alignment = {horizontal: c === 1 ? 'left' : 'right', vertical: 'middle'}; } });
+  };
+  const estilo = (ws, h) => {
+    KS.forEach(k => {
+      const r = ws.getRow(rowOf[k]), ty = TY[k], cls = FILAS_BASE.includes(k) ? 'base' : (k === 'prom' || (k === 'otn' && h.tipo === 'ag')) ? 'pal' : k === 'recup' ? 'fra' : '';
+      for (let c = 1; c <= 16; c++) {
+        const x = r.getCell(c);
+        x.font = fnt({bold: cls === 'pal' || cls === 'fra' || c === 15});
+        if (c > 1) { x.numFmt = ty === '%' ? '0.00%' : '#,##0'; x.alignment = {horizontal: 'right'}; }
+        const bg = cls === 'base' ? BASE : cls === 'pal' ? PAL : cls === 'fra' ? FRA : null; if (bg) x.fill = fill(bg);
+        if (c === 2) { x.fill = fill(BASE_F); x.font = fnt({bold: true}); }
+        x.border = cls === 'fra' ? {top: {style: 'medium', color: {argb: VERDE}}, bottom: {style: 'medium', color: {argb: VERDE}}} : {bottom: {style: 'thin', color: {argb: GRIS_L}}};
+      }
+    });
+  };
+  const setF = (cell, f, v) => { cell.value = {formula: f, result: (typeof v === 'number' && isFinite(v)) ? v : 0}; };
+  const totales = (ws, h, nAses) => {
+    KS.forEach(k => {
+      const r = rowOf[k], md = MODE[k], P = h.P, tot = totalRow(P, k, md);
+      let f;
+      if (k === 'prom') f = `IF(${CT}${rowOf.otn}=0,0,${CT}${rowOf.otm}/${CT}${rowOf.otn})`;
+      else if (k === 'mmin') f = `MIN(C${r}:N${r})`;
+      else if (k === 'mmax') f = `MAX(C${r}:N${r})`;
+      else if (md === 'sum') f = `SUM(C${r}:N${r})`;
+      else f = `N${r}`;
+      setF(ws.getCell(`${CT}${r}`), f, tot);
+      if (nAses) setF(ws.getCell(`${CP}${r}`), (TY[k] === '%' || ['mmin', 'mmax', 'prom'].includes(k)) ? `${CT}${r}` : `${CT}${r}/${nAses}`, (TY[k] === '%' || ['mmin', 'mmax', 'prom'].includes(k)) ? tot : tot / nAses);
+    });
+  };
+  const nota = (ws, row, txt) => { const c = ws.getCell(`A${row}`); c.value = txt; c.font = fnt({size: 8, italic: true, color: {argb: GRIS}}); };
+  const titBloque = (ws, row, txt) => { const c = ws.getCell(`A${row}`); c.value = txt; c.font = fnt({bold: true, color: {argb: ROJO}}); };
+
+  /* ---- agencias ---- */
+  wb.hojas.filter(h => h.tipo === 'ag').forEach(h => {
+    const ws = sheets[h.nombre], P = h.P, h26 = h.h26 || {}; encabezado(ws, h);
+    KS.forEach(k => ws.getCell(`A${rowOf[k]}`).value = ROWS.find(r => r[0] === k)[1].replace(/\s+/g, ' ').trim());
+    // columna B: dic-2026 (saldo y clientes = punto de partida del plan)
+    KS.forEach(k => { const v = k === 'saldo' ? P.saldo[0] : k === 'vgn' ? P.vgn[0] : h26[k]; if (v != null && v !== '') ws.getCell(`B${rowOf[k]}`).value = TY[k] === 'n' ? Math.round(+v) : +v; });
+    // supuestos
+    titBloque(ws, SUP0, 'SUPUESTOS EDITABLES (celdas amarillas, mes a mes)');
+    const supV = {otn: i => P.otn[i + 1], prom: i => P.prom[i + 1], pc1: i => P.pc1[i + 1], pc15: i => P.pc15[i + 1], pc30: i => P.pc30[i + 1], tRec: i => div(P.recup[i + 1], P.saldo[i]), tCan: i => div(P.canc[i + 1], P.vgn[i])};
+    SUPK.forEach(k => { const r = supRow[k]; ws.getCell(`A${r}`).value = SUPL[k]; ws.getCell(`A${r}`).font = fnt();
+      for (let i = 0; i < 12; i++) { const c = ws.getCell(`${MC(i)}${r}`); c.value = k === 'otn' ? Math.round(supV[k](i)) : +supV[k](i); c.fill = fill(AMA); c.font = fnt({color: {argb: 'FF1F3864'}}); c.numFmt = ['otn'].includes(k) ? '#,##0' : k === 'prom' ? '#,##0.00' : '0.00%'; c.alignment = {horizontal: 'right'}; c.border = {bottom: {style: 'thin', color: {argb: GRIS_L}}}; } });
+    titBloque(ws, FAC0, 'FACTORES DE LA AGENCIA (todo el año; 1,00 = sin cambio · se multiplican por los factores de FACES)');
+    FACK.forEach(k => { const r = facRow[k]; ws.getCell(`A${r}`).value = FACL[k]; const c = ws.getCell(`B${r}`); c.value = 1; c.numFmt = '0.00'; c.fill = fill(AMA); c.font = fnt({bold: true, color: {argb: 'FF1F3864'}}); c.alignment = {horizontal: 'right'}; });
+    const F = k => `$B$${facRow[k]}*${facG(k)}`;
+    for (let i = 0; i < 12; i++) {
+      const c = MC(i), p = i === 0 ? 'B' : MC(i - 1), m = i + 1, S = k => `${c}${supRow[k]}`, Rr = k => `${c}${rowOf[k]}`, Pr = k => `${p}${rowOf[k]}`;
+      const otn0 = P.otn[m] || 0, fr = (a, b) => div(a, b);
+      const W = (k, f) => setF(ws.getCell(Rr(k)), f, P[k][m]);
+      W('otn', `ROUND(${S('otn')}*${F('fC')},0)`);
+      W('prom', `${S('prom')}*${F('fM')}`);
+      W('otm', `${Rr('otn')}*${Rr('prom')}`);
+      ['promo', 'ases', 'comi', 'solic', 'planif'].forEach(k => W(k, otn0 ? `ROUND(${P[k][m] || 0}*${Rr('otn')}/${otn0},0)` : `${Math.round(P[k][m] || 0)}`));
+      W('orn', `ROUND(${Rr('otn')}*${fr(P.orn[m], otn0)},0)`); W('sun', `${Rr('otn')}-${Rr('orn')}`);
+      W('recup', `${Pr('saldo')}*${S('tRec')}*${F('fR')}`);
+      W('cast', `${Pr('saldo')}*${fr(P.cast[m], P.saldo[i])}`);
+      W('castn', `ROUND(${Pr('vgn')}*${fr(P.castn[m], P.vgn[i])},0)`);
+      W('saldo', `${Pr('saldo')}+${Rr('otm')}-${Rr('recup')}-${Rr('cast')}`);
+      W('canc', `ROUND(${Pr('vgn')}*${S('tCan')}*${F('fK')},0)`);
+      W('vgn', `${Pr('vgn')}+${Rr('otn')}-${Rr('canc')}-${Rr('castn')}`);
+      [['pc1', 'c1'], ['pc15', 'c15'], ['pc30', 'c30']].forEach(([pc, cc]) => { W(pc, `MIN(1,${S(pc)}*${F('fE')})`); W(cc, `${Rr('saldo')}*${Rr(pc)}`); });
+      W('moran', `ROUND(${Rr('vgn')}*${fr(P.moran[m], P.vgn[m])}*${F('fE')},0)`);
+      W('mmin', `${P.mmin[m] || 0}`); W('mmax', `${P.mmax[m] || 0}`);
+      W('demn', `ROUND(${Rr('otn')}*${fr(P.demn[m], otn0)},0)`);
+      W('dem', `${Rr('otm')}*${fr(P.dem[m], P.otm[m])}`);
+      W('recdem', `${Rr('dem')}*${fr(P.recdem[m], P.dem[m])}`);
+      W('reccast', `${Rr('cast')}*${fr(P.reccast[m], P.cast[m])}`);
+    }
+    totales(ws, h, h.nAses); estilo(ws, h);
+    nota(ws, FAC0 + FACK.length + 2, 'Cambia solo las celdas amarillas. Colocación = créditos × monto. Cartera = cartera anterior + colocación − recuperación − castigos. Clientes = anteriores + otorgados − cancelados − castigados. CER en USD = % × cartera. Demandados y sus recuperaciones en proporción al plan.');
+  });
+
+  /* ---- zonas, regiones y FACES: suman sus agencias ---- */
+  wb.hojas.filter(h => h.tipo === 'grp').forEach(h => {
+    const ws = sheets[h.nombre], P = h.P, h26 = h.h26 || {}, refs = h.ks.map(k => nAgSheet[k]).filter(Boolean).map(q); encabezado(ws, h);
+    KS.forEach(k => ws.getCell(`A${rowOf[k]}`).value = ROWS.find(r => r[0] === k)[1].replace(/\s+/g, ' ').trim());
+    const cols = ['B', ...MESL.map((_, i) => MC(i))];
+    cols.forEach((c, j) => {
+      const m = j; // 0 = dic-26
+      KS.forEach(k => {
+        const cell = ws.getCell(`${c}${rowOf[k]}`), sum = refs.map(r => `${r}!${c}${rowOf[k]}`).join(',');
+        const v = j === 0 ? (k === 'saldo' ? P.saldo[0] : k === 'vgn' ? P.vgn[0] : h26[k]) : P[k][m];
+        if (j === 0 && (v == null || v === '')) return;
+        let f;
+        if (k === 'prom') f = `IF(${c}${rowOf.otn}=0,0,${c}${rowOf.otm}/${c}${rowOf.otn})`;
+        else if (k === 'pc1' || k === 'pc15' || k === 'pc30') f = `IF(${c}${rowOf.saldo}=0,0,${c}${rowOf['c' + k.slice(2)]}/${c}${rowOf.saldo})`;
+        else if (k === 'mmin') f = `MIN(${sum})`;
+        else if (k === 'mmax') f = `MAX(${sum})`;
+        else f = `SUM(${sum})`;
+        setF(cell, f, +v);
+      });
+    });
+    totales(ws, h, h.nAses); estilo(ws, h);
+    if (h.faces) {
+      titBloque(ws, FAC0, 'FACTORES FACES (se aplican a todas las agencias; 1,00 = sin cambio)');
+      FACK.forEach(k => { const r = facRow[k]; ws.getCell(`A${r}`).value = FACL[k]; const c = ws.getCell(`B${r}`); c.value = 1; c.numFmt = '0.00'; c.fill = fill(AMA); c.font = fnt({bold: true, color: {argb: 'FF1F3864'}}); c.alignment = {horizontal: 'right'}; });
+      nota(ws, FAC0 + FACK.length + 2, 'Las cifras de esta hoja suman las agencias. Para simular, cambia los factores FACES (todas las agencias) o los supuestos y factores de cada agencia.');
+    } else nota(ws, SUP0, 'Suma de: ' + h.ks.map(k => (S.ag[k] || {}).nombre || k).join(', ') + '. Para simular, cambia los supuestos de cada agencia o los factores de la hoja FACES.');
+  });
+  Object.values(sheets).forEach(ws => { ws.pageSetup = {orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0, paperSize: 9}; });
+  return await book.xlsx.writeBuffer();
+}
 async function escribirLibro(wb) {
   const X = await cargarExcelJS(), book = new X.Workbook();
   book.creator = 'PLANIFICA 2027 · FACES';
@@ -3157,12 +3294,12 @@ async function descargar(tipo, id) {
     const hayP = keys.some(k => (modelo(k) || {F: {last: 12}}).F.last < 12);
     const wb = libroNuevo(), M = meta();
     const metaF = [['ALCANCE', todo ? 'FACES' : 'Agencias de tu alcance'], ['AGENCIAS', keys.length], ['ASESORES DE CREDITO', T.nAses], ['FECHA DE ELABORACION', new Date().toISOString().slice(0, 10)]];
-    agregarHoja(wb, hojaAnexo('FACES', metaF, T.P, T.y25 ? histCol(T.y25, false) : null, histCol(T.F, hayP), T.nAses), todo ? 'FACES' : 'Consolidado');
+    agregarHoja(wb, Object.assign(hojaAnexo('FACES', metaF, T.P, T.y25 ? histCol(T.y25, false) : null, histCol(T.F, hayP), T.nAses), {tipo: 'grp', faces: true, ks: keys.filter(k => modelo(k))}), todo ? 'FACES' : 'Consolidado');
     /* Una hoja por región, una por zona y una por agencia (mismo formato Anexo 5) */
     const usadas = new Set([todo ? 'FACES' : 'Consolidado']), nom = t => { let n = hojaNombre(t); while (usadas.has(n)) n = hojaNombre(t).slice(0, 28) + ' ' + (usadas.size); usadas.add(n); return n; };
     const grupo = (titulo, alcance, ks) => { const G = sumaModelos(ks), hp = ks.some(k => (modelo(k) || {F: {last: 12}}).F.last < 12);
       const m = [['ALCANCE', alcance], ['AGENCIAS', ks.map(k => S.ag[k].nombre).join(', ')], ['ASESORES DE CREDITO', G.nAses], ['FECHA DE ELABORACION', new Date().toISOString().slice(0, 10)]];
-      agregarHoja(wb, hojaAnexo(titulo, m, G.P, G.y25 ? histCol(G.y25, false) : null, histCol(G.F, hp), G.nAses), nom(titulo)); };
+      agregarHoja(wb, Object.assign(hojaAnexo(titulo, m, G.P, G.y25 ? histCol(G.y25, false) : null, histCol(G.F, hp), G.nAses), {tipo: 'grp', ks}), nom(titulo)); };
     /* orden jerárquico: FACES › región › zona › sus agencias; pestaña roja para las agencias destacadas */
     const okK = keys.filter(k => modelo(k)), regs = [...new Set(okK.map(k => S.ag[k].reg))], dest = destacadas();
     regs.forEach(r => {
@@ -3170,10 +3307,10 @@ async function descargar(tipo, id) {
       [...new Set(okK.filter(k => S.ag[k].reg === r).map(k => S.ag[k].zona))].forEach(z => {
         const kz = okK.filter(k => S.ag[k].reg === r && S.ag[k].zona === z);
         grupo(/^ZONA/i.test(z) ? z : 'Zona ' + z, `REGION ${r} · ${/^ZONA/i.test(z) ? z : 'ZONA ' + z}`, kz);
-        kz.forEach(k => { const a = S.ag[k], Mo = modelo(k); agregarHoja(wb, Object.assign(hojaAnexo(a.nombre, metaBase(a, [['ASESORES DE CREDITO', Mo.ases.length], ['JEFE DE AGENCIA', a.jefe || '']]), Mo.P, null, histCol(Mo.F.s, Mo.F.last < 12), Mo.ases.length, {palOtn: true}), {rojo: dest.includes(k)}), nom(a.nombre)); });
+        kz.forEach(k => { const a = S.ag[k], Mo = modelo(k); agregarHoja(wb, Object.assign(hojaAnexo(a.nombre, metaBase(a, [['ASESORES DE CREDITO', Mo.ases.length], ['JEFE DE AGENCIA', a.jefe || '']]), Mo.P, null, histCol(Mo.F.s, Mo.F.last < 12), Mo.ases.length, {palOtn: true}), {rojo: dest.includes(k), tipo: 'ag', k}), nom(a.nombre)); });
       });
     });
-    let buf; try { buf = await escribirLibro(wb); } catch (e) { toast('No se pudo generar el Excel: ' + (e.message || e)); return; }
+    let buf; try { buf = await escribirLibroModelo(wb); } catch (e) { toast('No se pudo generar el Excel: ' + (e.message || e)); return; }
     try { await S.dl.save({filename: `Planificacion_2027_${todo ? 'FACES' : 'consolidado'}.xlsx`, data: new Blob([buf])}); toast('Archivo descargado.'); }
     catch (e) { if (e.code !== 'declined') toast('No se pudo descargar en esta vista.'); }
     return;
